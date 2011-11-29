@@ -1,0 +1,10 @@
+include MANIFEST.in
+include README.rst
+include distribute_setup.py
+include setup.py
+graft docs
+graft example
+graft test
+graft VERSION
+graft AUTHOR
+graft URL
