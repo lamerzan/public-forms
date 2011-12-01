@@ -22,6 +22,7 @@ def package_env(file_name, strict=False):
 
 PACKAGE = u'{egg_name}'
 PROJECT = u'{package_name}'
+PROJECT_SLUG = u'{project_slug}'
 
 VERSION = package_env('VERSION')
 URL = package_env('URL')
@@ -43,7 +44,7 @@ PACKAGE_NAMESPACE = [s for s in '{package_namespace}'.strip()\
 
 NSLIST = lambda sep:(sep.join(PACKAGE_NAMESPACE[:i+1]) for i,n in enumerate(PACKAGE_NAMESPACE))
 
-PACKAGE_NAMESPACE_WITH_PACKAGE = PACKAGE_NAMESPACE + [PROJECT,]
+PACKAGE_NAMESPACE_WITH_PACKAGE = PACKAGE_NAMESPACE + [PROJECT_SLUG,]
 NSLIST_WITH_PACKAGE = lambda sep:(sep.join(PACKAGE_NAMESPACE_WITH_PACKAGE[:i+1]) \
                                   for i,n in enumerate(PACKAGE_NAMESPACE_WITH_PACKAGE))
 
