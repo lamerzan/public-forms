@@ -1,6 +1,6 @@
 import os
 __all__ = ('settings',)
-APP_NAME = os.path.dirname(__file__)
+APP_NAME = os.path.basename(os.path.dirname(__file__))
 class LazySettings(object):
     settings_prefix = APP_NAME.upper()
     def __init__(self):
