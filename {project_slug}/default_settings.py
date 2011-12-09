@@ -1,1 +1,9 @@
 from django.conf import settings
+
+EXCLUDE_CONTENT_TYPES = []
+
+REQUIRED_MIDDLEWARES = []
+
+REQUIRED_CONTEXT_PROCESSORS = []
+
+REQUIRED_APPLICATIONS = []

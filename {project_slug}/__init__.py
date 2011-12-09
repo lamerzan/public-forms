@@ -23,9 +23,49 @@ class LazySettings(object):
     def __getattr__(self, attr):
         if not self._settings_loaded:
             self._load_settings()
-            # del self.__class__.__getattr__
+        
         return attr in self.__dict__ and\
                self.__dict__[attr] or\
                getattr(self.django_settings, attr)
 
 settings = LazySettings()
+
+page_available = False
+try:
+    from feincms.module.page.models import Page
+    page_available = True
+except ImportError:
+    pass
+
+
+
+if page_available:
+    if not getattr(Page.register_extension, 'warnings_patched', False):
+        orig_register_extension = Page.register_extension.__get__(None, Page)
+        import warnings
+        def raise_warning_if_no_intersection(current, required, setting_name):
+            unsatisfied = (req for req in required if not req in current)
+            for req in unsatisfied:
+                warnings.warn('settings.%s does not contain `%s` entry, required for `%s` to work correctly'%(setting_name, req, APP_NAME))
+
+        def register_extension(cls, register_fn):
+            '''
+                warns about unconfigured but required 
+                    * middlewares
+                    * context processors
+                    * applications
+                    * urlconfs
+                omits register_fn for excluded content types
+            '''
+            getattr(settings, 'GRIDSYSTEM_EXCLUDE_CONTENT_TYPES', None)
+            for setting_name, requires_list in (('MIDDLEWARE_CLASSES', 'GRIDSYSTEM_REQUIRED_MIDDLEWARES'),
+                                                ('TEMPLATE_CONTEXT_PROCESSORS', 'GRIDSYSTEM_REQUIRED_CONTEXT_PROCESSORS'),
+                                                ('INSTALLED_APPS', 'GRIDSYSTEM_REQUIRED_APPLICATIONS')):
+                raise_warning_if_no_intersection(getattr(settings, setting_name), 
+                                                 getattr(settings, requires_list),
+                                                 setting_name)
+            orig_register_extension(register_fn)
+        register_extension.warnings_patched = True
+        Page.register_extension = classmethod(register_extension)
+
+    Page.register_extensions('{project_namespace}.{egg_name}.models')
