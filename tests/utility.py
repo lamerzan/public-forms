@@ -25,10 +25,10 @@ def chdir(dirname=None):
 
 
 
-APPLICATION_PACKAGE_PATH = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 ENV_CACHE_FILE = 'envcache.path'
 
 class VirtualenvTestCase(unittest.TestCase):
+    app_package_path = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
     # @classmethod
     # def setUpClass(cls):
     #     cls.initial_test_result = 
@@ -99,9 +99,9 @@ class VirtualProjectTestCase(VirtualenvTestCase):
                 reqs.write('%s\n'%req)
 
         cls.command('%s install_requirements'%cls.project_package_name)
-        with chdir(APPLICATION_PACKAGE_PATH):
+        with chdir(cls.app_package_path):
             cls.command('python %s develop'\
-                        %os.path.join(APPLICATION_PACKAGE_PATH, 
+                        %os.path.join(cls.app_package_path, 
                                       'setup.py'))
     
     @classmethod
