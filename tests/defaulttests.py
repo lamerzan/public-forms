@@ -3,16 +3,16 @@ import os
 
 class TestVirtualProject(VirtualProjectTestCase):
     settings = """
-DATABASES = {
-'default': {
+DATABASES = {{
+'default': {{
     'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
     'NAME': '%s.db',                      # Or path to database file if using sqlite3.
     'USER': '',                      # Not used with sqlite3.
     'PASSWORD': '',                  # Not used with sqlite3.
     'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
     'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
-    },
-}
+    }},
+}}
 DATABASE_ROUTERS=[]
 INSTALLED_APPS = (
     'django.contrib.auth',
@@ -26,7 +26,7 @@ INSTALLED_APPS = (
     'mptt',
     'feincms.module.page',
     'feincms',
-    'feincms.page.extensions.gridsystem',
+    '{package_namespace}.{egg_name}',
     'django.contrib.admin',
 
 )    
@@ -38,19 +38,20 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
 )
     """
+
     def test_package_importable(self):
-        out, err = self.command('''python -c "from feincms.page.extensions import gridsystem; print gridsystem; print gridsystem; print 333333;"''', output=True)
+        out, err = self.command('''python -c "from {package_namespace} import {egg_name}; print gridsystem; print 333333;"''', output=True)
         out = '%s'%out
-        self.assert_('feincms.page.extensions' in out)
-        self.assert_('gridsystem' in out)
+        self.assert_('{package_namespace}' in out)
+        self.assert_('{egg_name}' in out)
         self.assert_('module' in out)
         self.assert_('333333' in out)
 
     def test_default_settings_importable(self):
-        out, err = self.command('''python -c "from feincms.page.extensions.gridsystem import settings; print settings; print 333333;"''', output=True)
+        out, err = self.command('''python -c "from {package_namespace}.{egg_name} import settings; print settings; print 333333;"''', output=True)
         out = '%s'%out
-        self.assert_('feincms.page.extensions' in out)
-        self.assert_('gridsystem' in out)
+        self.assert_('{package_namespace}' in out)
+        self.assert_('{egg_name}' in out)
         self.assert_('LazySettings object' in out)
         self.assert_('333333' in out)
 
@@ -58,5 +59,4 @@ MIDDLEWARE_CLASSES = (
         with chdir(os.path.join(self.testdir, self.project_package_name)):
             with open('settings.py', 'a') as settings:
                 settings.write(self.settings%(self.project_package_name))
-
-            self.command('python manage.py test gridsystem')
+            self.command('python manage.py test {egg_name}')
