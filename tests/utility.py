@@ -61,7 +61,7 @@ class VirtualenvTestCase(unittest.TestCase):
     def command(self, *args, **kwargs):
         output = kwargs.pop('output', False)
         defaults = dict(stdout=output and subprocess.PIPE or sys.stdout,
-                        stderr=output and subprocess.PIPE or sys.stderr,
+                        stderr=output and subprocess.STDOUT or sys.stderr,
                         shell=True)
         defaults.update(kwargs)
         args = list(args)
@@ -70,7 +70,7 @@ class VirtualenvTestCase(unittest.TestCase):
                                              'activate'), 
                                 args[0])
         if output:
-            return subprocess.Popen(*args, **defaults).communicate()
+            return subprocess.Popen(*args, **defaults).communicate()[0]
         else:
             return subprocess.call(*args, **defaults)
 
