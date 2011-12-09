@@ -76,17 +76,15 @@ class VirtualenvTestCase(unittest.TestCase):
 
 class VirtualProjectTestCase(VirtualenvTestCase):
     '''One project created per TestCase'''
-    requirements = ['django>=1.3.0', 
+    requirements = ['django',
                     'django-mptt', 
-                    '-e git+http://github.com/feincms/feincms.git@next#egg=django-feincms']
+                    'feincms',
+                    '-e git+http://github.com/wardi/django-filebrowser-no-grappelli.git#egg=django-filebrowser']
     tested_module = 'NameError'
     project_branch = 'feincms'
 
     @classmethod
     def create_project(cls):
-        import virtualenv
-        virtualenv.create_environment(cls.testdir)
-
         cls.project_package_name = ''.join((choice('qwertyuio') for i in xrange(10)))
         
         create_cmd = 'django-skeleton create --branch=%s project %s %s'%\
