@@ -34,7 +34,7 @@ else:
     AUTHOR = AUTHOR_AND_EMAIL
     AUTHOR_EMAIL = u''
 
-DESC = ""
+DESC = "feincms extension templated from django.contrib.skeleton.application"
 
 PACKAGE_NAMESPACE = [s for s in '{package_namespace}'.strip()\
                                                      .strip('"')\
@@ -44,11 +44,11 @@ PACKAGE_NAMESPACE = [s for s in '{package_namespace}'.strip()\
 
 NSLIST = lambda sep:(sep.join(PACKAGE_NAMESPACE[:i+1]) for i,n in enumerate(PACKAGE_NAMESPACE))
 
-PACKAGE_NAMESPACE_WITH_PACKAGE = PACKAGE_NAMESPACE + [PROJECT_SLUG,]
+PACKAGE_NAMESPACE_WITH_PACKAGE = PACKAGE_NAMESPACE + [PACKAGE,]
 NSLIST_WITH_PACKAGE = lambda sep:(sep.join(PACKAGE_NAMESPACE_WITH_PACKAGE[:i+1]) \
                                   for i,n in enumerate(PACKAGE_NAMESPACE_WITH_PACKAGE))
 
-PACKAGE_DIR = dict(zip(NSLIST_WITH_PACKAGE('.'), 
+PACKAGE_DIRS = dict(zip(NSLIST_WITH_PACKAGE('.'), 
                        NSLIST_WITH_PACKAGE('/')))
 
 class install_requirements(object):
@@ -87,8 +87,8 @@ if __name__ == '__main__':
         url=URL,
         license=package_env('LICENSE'),
         namespace_packages=list(NSLIST('.')),
-        packages=['.'.join(PACKAGE_NAMESPACE) + '.{package_name}',],
-        package_dir=PACKAGE_DIR,
+        packages=list(NSLIST_WITH_PACKAGE('.')),
+        package_dir=PACKAGE_DIRS,
         include_package_data=True,
         zip_safe=False,
         test_suite = 'tests',
