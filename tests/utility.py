@@ -87,30 +87,24 @@ class VirtualProjectTestCase(VirtualenvTestCase):
         import virtualenv
         virtualenv.create_environment(cls.testdir)
 
-        # cls.project_package_name = ''.join((choice('qwertyuio') for i in xrange(10)))
+        cls.project_package_name = ''.join((choice('qwertyuio') for i in xrange(10)))
         
-        # create_cmd = 'django-skeleton create --branch=%s project %s %s'%\
-        #                 (cls.project_branch, cls.testdir, cls.project_package_name)
+        create_cmd = 'django-skeleton create --branch=%s project %s %s'%\
+                        (cls.project_branch, cls.testdir, cls.project_package_name)
         
-        # subprocess.call(create_cmd, 
-        #                 shell=True, 
-        #                 stdout=sys.stdout, 
-        #                 stderr=sys.stderr)
-        # with open(os.path.join(cls.testdir, 'requirements.txt'), 'w') as reqs:
-        #     for req in cls.requirements:
-        #         reqs.write('%s\n'%req)
+        subprocess.call(create_cmd, 
+                        shell=True, 
+                        stdout=sys.stdout, 
+                        stderr=sys.stderr)
+        with open(os.path.join(cls.testdir, 'requirements.txt'), 'w') as reqs:
+            for req in cls.requirements:
+                reqs.write('%s\n'%req)
 
-        # cls.command('%s install_requirements'%cls.project_package_name)
-        print '*'*20, APPLICATION_PACKAGE_PATH
+        cls.command('%s install_requirements'%cls.project_package_name)
         with chdir(APPLICATION_PACKAGE_PATH):
-            print os.listdir('.')
-            out, err = cls.command('python %s develop'\
-                                    %os.path.join(APPLICATION_PACKAGE_PATH, 
-                                                  'setup.py'),
-                                    output=True)
-            print out
-            print err
-
+            cls.command('python %s develop'\
+                        %os.path.join(APPLICATION_PACKAGE_PATH, 
+                                      'setup.py'))
     
     @classmethod
     def setUpClass(cls):
