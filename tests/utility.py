@@ -26,7 +26,7 @@ def chdir(dirname=None):
 
 
 APPLICATION_PACKAGE_PATH = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
-
+ENV_CACHE_FILE = 'envcache.path'
 
 class VirtualenvTestCase(unittest.TestCase):
     # @classmethod
@@ -106,5 +106,30 @@ class VirtualProjectTestCase(VirtualenvTestCase):
     
     @classmethod
     def setUpClass(cls):
+        envcache = None
+        project_package_name = None
+        if os.path.exists(ENV_CACHE_FILE):
+            with open(ENV_CACHE_FILE) as tmpdirpath:
+                envpath, project_package_name = [l.strip() for l \
+                                                 in tmpdirpath.read().split('\n')]
+                if os.path.exists(envpath):
+                    envcache = envpath
+        if envcache:
+            cls.testdir = envcache
+            cls.project_package_name = project_package_name
+            return
         VirtualenvTestCase.setUpClass.__get__(None, cls)()
         cls.create_project()
+        with open(ENV_CACHE_FILE, 'w') as tmpdirpath:
+            tmpdirpath.write(cls.testdir)
+            tmpdirpath.write('\n%s'%cls.project_package_name)
+    @classmethod
+    def tearDownClass(cls):
+        envcache = None
+        if os.path.exists(ENV_CACHE_FILE):
+            with open(ENV_CACHE_FILE) as tmpdirpath:
+                envpath = tmpdirpath.read().split('\n')[0].strip()
+                if os.path.exists(envpath):
+                    return
+
+        VirtualenvTestCase.tearDownClass.__get__(None, cls)()
