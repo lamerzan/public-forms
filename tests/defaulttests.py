@@ -2,24 +2,7 @@ from utility import VirtualProjectTestCase, chdir
 import os
 import time
 class TestVirtualProject(VirtualProjectTestCase):
-    def test_package_importable(self):
-        out = self.command('''python -c "from {package_namespace} import {egg_name}; print {egg_name}; print {egg_name}; print 333333;"''', output=True)
-        out = '%s'%out
-        self.assert_('{package_namespace}' in out)
-        self.assert_('{egg_name}' in out)
-        self.assert_('module' in out)
-        self.assert_('333333' in out)
-
-    def test_default_settings_importable(self):
-        out = self.command('''python -c "from {package_namespace}.{egg_name} import settings; print settings; print 333333;"''', output=True)
-        out = '%s'%out
-        self.assert_('feincms.page.extensions' in out)
-        self.assert_('{egg_name}' in out)
-        self.assert_('LazySettings object' in out)
-        self.assert_('333333' in out)
-
-    def test_run_package_tests(self):
-        test_settings = """
+    test_settings = """
 DATABASES = {{
 'default': {{
     'ENGINE': 'django.db.backends.sqlite3',
@@ -54,11 +37,39 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
 )
     """
-        with chdir(os.path.join(self.testdir, self.project_package_name)):
-            with open('settings.py', 'a') as settings:
-                settings.write(test_settings%self.project_package_name)
+    def test_package_importable(self):
+        out = self.command('''python -c "from {package_namespace} import {egg_name}; print {egg_name}; print {egg_name}; print 333333;"''', output=True)
+        out = '%s'%out
+        self.assert_('{package_namespace}' in out)
+        self.assert_('{egg_name}' in out)
+        self.assert_('module' in out)
+        self.assert_('333333' in out)
 
+    def test_default_settings_importable(self):
+        out = self.command('''python -c "from {package_namespace}.{egg_name} import settings; print settings; print 333333;"''', output=True)
+        out = '%s'%out
+        self.assert_('feincms.page.extensions' in out)
+        self.assert_('{egg_name}' in out)
+        self.assert_('LazySettings object' in out)
+        self.assert_('333333' in out)
+
+
+    def setUp(self):
+        self.package_settings_path = os.path.join(self.testdir, self.project_package_name, 'settings.py')
+        with open(self.package_settings_path) as package_settings:
+            self.original_settings = package_settings.read()
+        with open(self.package_settings_path, 'a') as package_settings:
+            package_settings.write(self.test_settings)
+        
+    def tearDown(self):
+        with open(self.package_settings_path, 'w') as package_settings:
+            package_settings.write(self.original_settings)
+
+
+    def test_run_package_tests(self):
+        with chdir(os.path.join(self.testdir, self.project_package_name)):
             self.command('python manage.py test {egg_name}')
+
     
     def test_register_called(self):
         REGISTER_FN = """
@@ -121,8 +132,6 @@ def register(cls, admin_cls):
         finally:
             with open(default_settings_path, 'w') as default_settings:
                 default_settings.write(orig_default_settings)    
-            with open(project_settings_path, 'w') as project_settings:
-                project_settings.write(orig_project_settings)    
             time.sleep(0.1)#allow popen to close everything
 
     def test_register_warns_about_required_apps(self):
@@ -159,8 +168,6 @@ def register(cls, admin_cls):
         finally:
             with open(default_settings_path, 'w') as default_settings:
                 default_settings.write(orig_default_settings)    
-            with open(project_settings_path, 'w') as project_settings:
-                project_settings.write(orig_project_settings) 
             time.sleep(0.1)#allow popen to close everything
 
     def test_register_warns_about_required_context_processors(self):
@@ -197,6 +204,10 @@ def register(cls, admin_cls):
         finally:
             with open(default_settings_path, 'w') as default_settings:
                 default_settings.write(orig_default_settings)    
+<<<<<<< HEAD
             with open(project_settings_path, 'w') as project_settings:
                 project_settings.write(orig_project_settings) 
             time.sleep(0.1)#allow popen to close everything        pass
+=======
+            time.sleep(0.1)#allow popen to close everything        pass
+>>>>>>> bfdd0d1... defaulttests per test package settings isolation fix
