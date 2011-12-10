@@ -204,14 +204,4 @@ def register(cls, admin_cls):
         finally:
             with open(default_settings_path, 'w') as default_settings:
                 default_settings.write(orig_default_settings)    
-<<<<<<< HEAD
-            with open(project_settings_path, 'w') as project_settings:
-                project_settings.write(orig_project_settings) 
-<<<<<<< HEAD
             time.sleep(0.1)#allow popen to close everything
-=======
-            time.sleep(0.1)#allow popen to close everything        pass
-=======
-            time.sleep(0.1)#allow popen to close everything        pass
->>>>>>> bfdd0d1... defaulttests per test package settings isolation fix
->>>>>>> gridsystem
