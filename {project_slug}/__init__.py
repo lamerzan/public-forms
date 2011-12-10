@@ -58,9 +58,9 @@ if page_available:
                 omits register_fn for excluded content types
             '''
             getattr(settings, 'ANYTHING', None)
-            for setting_name, requires_list in (('MIDDLEWARE_CLASSES', '%s_REQUIRED_MIDDLEWARES'%APP_NAME),
-                                                ('TEMPLATE_CONTEXT_PROCESSORS', '%s_REQUIRED_CONTEXT_PROCESSORS'%APP_NAME),
-                                                ('INSTALLED_APPS', '%s_REQUIRED_APPLICATIONS'%APP_NAME)):
+            for setting_name, requires_list in (('MIDDLEWARE_CLASSES', '%s_REQUIRED_MIDDLEWARES'%APP_NAME.upper()),
+                                                ('TEMPLATE_CONTEXT_PROCESSORS', '%s_REQUIRED_CONTEXT_PROCESSORS'%APP_NAME.upper()),
+                                                ('INSTALLED_APPS', '%s_REQUIRED_APPLICATIONS'%APP_NAME.upper())):
                 raise_warning_if_no_intersection(getattr(settings, setting_name), 
                                                  getattr(settings, requires_list),
                                                  setting_name)
