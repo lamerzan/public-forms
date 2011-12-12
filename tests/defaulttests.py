@@ -1,6 +1,10 @@
-from utility import VirtualProjectTestCase, chdir
+
 import os
 import time
+from pkg_resources import resource_filename
+
+from utility import VirtualProjectTestCase, chdir
+
 class TestVirtualProject(VirtualProjectTestCase):
     test_settings = """
 DATABASES = {{
@@ -48,22 +52,41 @@ MIDDLEWARE_CLASSES = (
     def test_default_settings_importable(self):
         out = self.command('''python -c "from {package_namespace}.{egg_name} import settings; print settings; print 333333;"''', output=True)
         out = '%s'%out
-        self.assert_('feincms.page.extensions' in out)
+        self.assert_('{package_namespace}' in out)
         self.assert_('{egg_name}' in out)
         self.assert_('LazySettings object' in out)
         self.assert_('333333' in out)
 
-
+    test_registers = """
+from feincms.module.page.models import Page
+Page.register_templates({{
+'title': '3 cols template',
+'path': 'cms/3cols.html',
+'regions': (
+    ('first_col', 'First column'),
+    ('second_col', 'Second column'),
+    ('third_col', 'Third column'),
+    ),
+}})
+"""
     def setUp(self):
         self.package_settings_path = os.path.join(self.testdir, self.project_package_name, 'settings.py')
         with open(self.package_settings_path) as package_settings:
             self.original_settings = package_settings.read()
         with open(self.package_settings_path, 'a') as package_settings:
             package_settings.write(self.test_settings)
+
+        self.models_path = resource_filename('{package_namespace}.{egg_name}', 'models.py')    
+        with open(self.models_path) as package_models:
+            self.orig_models = package_models.read()
+        with open(self.models_path, 'a') as package_models:
+            package_models.write(self.test_registers)
         
     def tearDown(self):
         with open(self.package_settings_path, 'w') as package_settings:
             package_settings.write(self.original_settings)
+        with open(self.models_path, 'w') as package_models:
+            package_models.write(self.orig_models)
 
 
     def test_run_package_tests(self):
@@ -78,7 +101,7 @@ def register(cls, admin_cls):
         marker.write("marker")
 """
         MARKER_PATH = os.path.join(self.testdir, 'marker')
-        from pkg_resources import resource_filename
+
         models_path = resource_filename('{package_namespace}.{egg_name}', 'models.py')
 
         with open(models_path) as models:
