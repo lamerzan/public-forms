@@ -44,7 +44,7 @@ PACKAGE_NAMESPACE = [s for s in '{package_namespace}'.strip()\
 
 NSLIST = lambda sep:(sep.join(PACKAGE_NAMESPACE[:i+1]) for i,n in enumerate(PACKAGE_NAMESPACE))
 
-PACKAGE_NAMESPACE_WITH_PACKAGE = PACKAGE_NAMESPACE + [PACKAGE,]
+PACKAGE_NAMESPACE_WITH_PACKAGE = PACKAGE_NAMESPACE + [PROJECT_SLUG,]
 NSLIST_WITH_PACKAGE = lambda sep:(sep.join(PACKAGE_NAMESPACE_WITH_PACKAGE[:i+1]) \
                                   for i,n in enumerate(PACKAGE_NAMESPACE_WITH_PACKAGE))
 
