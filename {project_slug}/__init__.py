@@ -30,16 +30,16 @@ class LazySettings(object):
 
 settings = LazySettings()
 
-page_available = False
+page_module_available = False
 try:
     from feincms.module.page.models import Page
-    page_available = True
+    page_module_available = True
 except ImportError:
     pass
 
 
 
-if page_available:
+if page_module_available:
     if not getattr(Page.register_extension, 'warnings_patched', False):
         orig_register_extension = Page.register_extension.__get__(None, Page)
         import warnings
@@ -57,7 +57,7 @@ if page_available:
                     #* urlconfs
                 omits register_fn for excluded content types
             '''
-            getattr(settings, 'ANYTHING', None)
+            getattr(settings, 'ANYTHING', None)#load settings
             for setting_name, requires_list in (('MIDDLEWARE_CLASSES', '%s_REQUIRED_MIDDLEWARES'%APP_NAME.upper()),
                                                 ('TEMPLATE_CONTEXT_PROCESSORS', '%s_REQUIRED_CONTEXT_PROCESSORS'%APP_NAME.upper()),
                                                 ('INSTALLED_APPS', '%s_REQUIRED_APPLICATIONS'%APP_NAME.upper())):
