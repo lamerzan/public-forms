@@ -57,6 +57,7 @@ if page_module_available:
                     #* urlconfs
                 omits register_fn for excluded content types
             '''
+
             getattr(settings, 'ANYTHING', None)#load settings
             for setting_name, requires_list in (('MIDDLEWARE_CLASSES', '%s_REQUIRED_MIDDLEWARES'%APP_NAME.upper()),
                                                 ('TEMPLATE_CONTEXT_PROCESSORS', '%s_REQUIRED_CONTEXT_PROCESSORS'%APP_NAME.upper()),
