@@ -20,9 +20,9 @@ def package_env(file_name, strict=False):
     else:
         return u''
 
-PACKAGE = u'variative-renderer'
-PROJECT = u'variative_renderer'
-PROJECT_SLUG = u'variative_renderer'
+PACKAGE = u'{egg_name}'
+PROJECT = u'{package_name}'
+PROJECT_SLUG = u'{project_slug}'
 
 VERSION = package_env('VERSION')
 URL = package_env('URL')
@@ -36,7 +36,7 @@ else:
 
 DESC = "feincms extension templated from django.contrib.skeleton.application"
 
-PACKAGE_NAMESPACE = [s for s in 'feincms.page.extensions'.strip()\
+PACKAGE_NAMESPACE = [s for s in '{package_namespace}'.strip()\
                                                      .strip('"')\
                                                      .strip("'")\
                                                      .strip()\

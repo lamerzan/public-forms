@@ -69,4 +69,4 @@ if page_module_available:
         register_extension.warnings_patched = True
         Page.register_extension = classmethod(register_extension)
 
-    Page.register_extensions('feincms.page.extensions.variative_renderer.models')
+    Page.register_extensions('{package_namespace}.{project_slug}.models')
