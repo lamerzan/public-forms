@@ -20,9 +20,9 @@ def package_env(file_name, strict=False):
     else:
         return u''
 
-PACKAGE = u'{egg_name}'
-PROJECT = u'{package_name}'
-PROJECT_SLUG = u'{project_slug}'
+PACKAGE = u'public-forms'
+PROJECT = u'public_forms'
+PROJECT_SLUG = u'public_forms'
 
 VERSION = package_env('VERSION')
 URL = package_env('URL')
@@ -36,7 +36,7 @@ else:
 
 DESC = "feincms extension templated from django.contrib.skeleton.application"
 
-PACKAGE_NAMESPACE = [s for s in '{package_namespace}'.strip()\
+PACKAGE_NAMESPACE = [s for s in 'feincms.page.extensions'.strip()\
                                                      .strip('"')\
                                                      .strip("'")\
                                                      .strip()\
@@ -76,8 +76,8 @@ class post_develop(develop, install_requirements):
 
 if __name__ == '__main__':
     setup(
-        cmdclass={{"install": post_install,
-                   "develop": post_develop,}},
+        cmdclass={"install": post_install,
+                   "develop": post_develop,},
         name=PROJECT,
         version=VERSION,
         description=DESC,

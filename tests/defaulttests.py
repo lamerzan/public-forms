@@ -7,16 +7,16 @@ from utility import VirtualProjectTestCase, chdir
 
 class TestVirtualProject(VirtualProjectTestCase):
     test_settings = """
-DATABASES = {{
-'default': {{
+DATABASES = {
+'default': {
     'ENGINE': 'django.db.backends.sqlite3',
     'NAME': '%s.db',
     'USER': '',
     'PASSWORD': '',
     'HOST': '',
     'PORT': '',
-    }},
-}}
+    },
+}
 DATABASE_ROUTERS=[]
 INSTALLED_APPS = (
     'django.contrib.auth',
@@ -30,7 +30,7 @@ INSTALLED_APPS = (
     'mptt',
     'feincms.module.page',
     'feincms',
-    '{package_namespace}.{project_slug}',
+    'feincms.page.extensions.public_forms',
     'django.contrib.admin',
 )    
 MIDDLEWARE_CLASSES = (
@@ -42,24 +42,24 @@ MIDDLEWARE_CLASSES = (
 )
     """
     def test_package_importable(self):
-        out = self.command('''python -c "from {package_namespace} import {project_slug}; print {project_slug}; print {project_slug}; print 333333;"''', output=True)
+        out = self.command('''python -c "from feincms.page.extensions import public_forms; print public_forms; print public_forms; print 333333;"''', output=True)
         out = '%s'%out
-        self.assert_('{package_namespace}' in out)
-        self.assert_('{project_slug}' in out)
+        self.assert_('feincms.page.extensions' in out)
+        self.assert_('public_forms' in out)
         self.assert_('module' in out)
         self.assert_('333333' in out)
 
     def test_default_settings_importable(self):
-        out = self.command('''python -c "from {package_namespace}.{project_slug} import settings; print settings; print 333333;"''', output=True)
+        out = self.command('''python -c "from feincms.page.extensions.public_forms import settings; print settings; print 333333;"''', output=True)
         out = '%s'%out
-        self.assert_('{package_namespace}' in out)
-        self.assert_('{project_slug}' in out)
+        self.assert_('feincms.page.extensions' in out)
+        self.assert_('public_forms' in out)
         self.assert_('LazySettings object' in out)
         self.assert_('333333' in out)
 
     test_registers = """
 from feincms.module.page.models import Page
-Page.register_templates({{
+Page.register_templates({
 'title': '3 cols template',
 'path': 'cms/3cols.html',
 'regions': (
@@ -67,7 +67,7 @@ Page.register_templates({{
     ('second_col', 'Second column'),
     ('third_col', 'Third column'),
     ),
-}})
+})
 """
     def setUp(self):
         self.package_settings_path = os.path.join(self.testdir, self.project_package_name, 'settings.py')
@@ -76,7 +76,7 @@ Page.register_templates({{
         with open(self.package_settings_path, 'a') as package_settings:
             package_settings.write(self.test_settings)
 
-        self.models_path = resource_filename('{package_namespace}.{project_slug}', 'models.py')    
+        self.models_path = resource_filename('feincms.page.extensions.public_forms', 'models.py')    
         with open(self.models_path) as package_models:
             self.orig_models = package_models.read()
         with open(self.models_path, 'a') as package_models:
@@ -91,7 +91,7 @@ Page.register_templates({{
 
     def test_run_package_tests(self):
         with chdir(os.path.join(self.testdir, self.project_package_name)):
-            self.command('python manage.py test {project_slug}')
+            self.command('python manage.py test public_forms')
 
     
     def test_register_called(self):
@@ -102,7 +102,7 @@ def register(cls, admin_cls):
 """
         MARKER_PATH = os.path.join(self.testdir, 'marker')
 
-        models_path = resource_filename('{package_namespace}.{project_slug}', 'models.py')
+        models_path = resource_filename('feincms.page.extensions.public_forms', 'models.py')
 
         with open(models_path) as models:
             orig_models = models.read()
@@ -127,7 +127,7 @@ def register(cls, admin_cls):
         PROJECT_MIDDLEWARE_SETTING_WITH_REQUIRED = """\nMIDDLEWARE_CLASSES = ['django.middleware.common.CommonMiddleware',]"""
 
         from pkg_resources import resource_filename
-        default_settings_path = resource_filename('{package_namespace}.{project_slug}',
+        default_settings_path = resource_filename('feincms.page.extensions.public_forms',
                                                   'default_settings.py')
         project_settings_path = os.path.join(self.testdir, self.project_package_name, 'settings.py')
         
@@ -159,11 +159,11 @@ def register(cls, admin_cls):
 
     def test_register_warns_about_required_apps(self):
         REQUIRED_APPS_SETTING = """\nREQUIRED_APPLICATIONS = ['feincms',]"""
-        PROJECT_APP_SETTING_WITHOUT_REQUIRED = """\nINSTALLED_APPS = ['{package_namespace}.{project_slug}',]"""
+        PROJECT_APP_SETTING_WITHOUT_REQUIRED = """\nINSTALLED_APPS = ['feincms.page.extensions.public_forms',]"""
 
 
         from pkg_resources import resource_filename
-        default_settings_path = resource_filename('{package_namespace}.{project_slug}',
+        default_settings_path = resource_filename('feincms.page.extensions.public_forms',
                                                   'default_settings.py')
         project_settings_path = os.path.join(self.testdir, self.project_package_name, 'settings.py')
         
@@ -198,7 +198,7 @@ def register(cls, admin_cls):
         PROJECT_CONTEXT_PROCESSOR_SETTING_WITHOUT_REQUIRED = """\nTEMPLATE_CONTEXT_PROCESSORS = []"""
 
         from pkg_resources import resource_filename
-        default_settings_path = resource_filename('{package_namespace}.{project_slug}',
+        default_settings_path = resource_filename('feincms.page.extensions.public_forms',
                                                   'default_settings.py')
         project_settings_path = os.path.join(self.testdir, self.project_package_name, 'settings.py')
         
