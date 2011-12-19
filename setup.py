@@ -76,8 +76,8 @@ class post_develop(develop, install_requirements):
 
 if __name__ == '__main__':
     setup(
-        cmdclass={"install": post_install,
-                   "develop": post_develop,},
+        cmdclass={{"install": post_install,
+                   "develop": post_develop,}},
         name=PROJECT,
         version=VERSION,
         description=DESC,
