@@ -12,6 +12,7 @@
 cms_media
 *.egg-info
 *.egg
+tmp*
 envcache.path
 distribute*gz
 bin
