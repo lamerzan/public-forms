@@ -50,8 +50,8 @@ class VirtualenvTestCase(unittest.TestCase):
     
     @classmethod
     def create_testdir(cls):
-        cls.testdir = tempfile.mkdtemp()
-    
+        cls.testdir = tempfile.mkdtemp(dir=cls.app_package_path)
+            
     @classmethod
     def destroy_testdirs(cls):
         if os.path.exists(cls.testdir):
@@ -100,9 +100,11 @@ class VirtualProjectTestCase(VirtualenvTestCase):
 
         cls.command('%s install_requirements'%cls.project_package_name)
         with chdir(cls.app_package_path):
+            os.environ['INSTALL_SKELETON_REQUIREMENTS'] = 'True'
             cls.command('python %s develop'\
                         %os.path.join(cls.app_package_path, 
                                       'setup.py'))
+            del os.environ['INSTALL_SKELETON_REQUIREMENTS']
     
     @classmethod
     def setUpClass(cls):
