@@ -30,12 +30,13 @@ INSTALLED_APPS = (
     'mptt',
     'feincms.module.page',
     'feincms',
+    'feincms.page.extensions.variative_renderer',
     'feincms.page.extensions.public_forms',
     'django.contrib.admin',
 )    
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
-    'django.co33ntrib.sessions.middleware.SessionMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
