@@ -41,7 +41,12 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
 )
-    """
+
+TEMPLATE_LOADERS = (
+    'django.template.loaders.app_directories.Loader',
+    'django.template.loaders.filesystem.Loader',
+)
+"""
     def test_package_importable(self):
         out = self.command('''python -c "from feincms.page.extensions import public_forms; print public_forms; print public_forms; print 333333;"''', output=True)
         out = '%s'%out

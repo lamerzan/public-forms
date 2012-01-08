@@ -25,6 +25,5 @@ class PublicForm(models.Model):
     content_type = models.ForeignKey(ContentType)
     content_object = generic.GenericForeignKey('content_type', 'object_id')
 
-
 def register(cls, admin_cls):
     cls.create_content_type(PublicForm)
