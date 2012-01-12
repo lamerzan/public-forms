@@ -9,13 +9,14 @@ from django.views.generic.edit import (BaseFormView,
                                        ModelFormMixin)
 
 from django.forms import Form, ModelForm, Media
-
 from django.views.generic.edit import TemplateResponseMixin, FormView
 from django.views.generic.detail import SingleObjectTemplateResponseMixin
 from django.template.response import TemplateResponse
 from django.utils.translation import get_language_from_request
 from django.utils.safestring import mark_safe
 from django.utils import simplejson as json
+from django.template.response import TemplateResponse
+from django.utils.translation import ugettext as _
 
 from captcha.fields import ReCaptchaFieldAjax
 from captcha.client import RECAPTCHA_SUPPORTED_LANUAGES
@@ -85,16 +86,11 @@ class PublicFormCaptchaMixin(object):
 
 
 class PublicFormAjaxMixin(object):
-    html_types = ('text/html','application/xhtml+xml','application/xml')
-    def is_accepts_html(self, request):
-        for html_type in self.html_types:
-            if html_type in request['Accept']:
-                return True
-        return False
-
-    def is_ajax(self, request):
-        return self.request.is_ajax() and self.is_accepts_html(request)
-
+    def ajax_on_prepare(self, request, **kwargs):
+        #short circuit to ajax response
+        self.response_class = TemplateResponse
+        self.on_prepare(request)
+        return self.render(request, **kwargs)
 
 class PublicFormMediaMixin(object):
     def get_media(self):
@@ -139,6 +135,12 @@ class BasePublicForm(BaseRenderer,
         form = super(BasePublicForm, self).get_form(form_class)
         form.submit_name = self.get_submit_name()
         return form
+
+    def get_context_data(self, **kwargs):
+        context = super(BasePublicForm, self).get_context_data(**kwargs)
+        context['action_title'] = _(self.get_title())
+        context['public_form_content'] = lambda:self.instance
+        return context
 
     def prepare_page(self, request):
         if hasattr(request, '_feincms_page'):
@@ -250,7 +252,10 @@ class PublicFormRequestDispatcher(object):
     def dispatch_method(self, method_name, request):
         self.request = request
         if self.is_request_owner(request):
-            return getattr(self, method_name)
+            if request.is_ajax():
+                return getattr(self, 'ajax_%s'%method_name)
+            else:
+                return getattr(self, method_name)
         else:
             return getattr(self.presentation, method_name)
         

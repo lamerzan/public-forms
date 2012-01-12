@@ -664,43 +664,43 @@ class DeletePublicFormsTest(FeincmsPageTestCase):
 
 
 class CRUDTest(FeincmsPageTestCase):
-    def setup_crud_page(self):
-        self.site_content_type = ContentType.objects.\
+    site_content_type = ContentType.objects.\
                                  get_for_model(Site)
-        
-        self.create_pf_kwargs = {
-                 'region':'first_col',
-                 'enable_captcha_once':False,
-                 'enable_captcha_always':False,
-                 'enable_ajax':False,
-                 'object_id':None,
-                 'content_type':self.site_content_type,
-                 'variation':'CreatePublicForm',
-                 'parent':self.page,
-                 'ordering':0}
+    create_pf_kwargs = {
+         'region':'first_col',
+         'enable_captcha_once':False,
+         'enable_captcha_always':False,
+         'enable_ajax':False,
+         'object_id':None,
+         'content_type':site_content_type,
+         'variation':'CreatePublicForm',
+         'ordering':0}
 
-        self.update_pf_kwargs = {
-                 'region':'second_col',
-                 'enable_captcha_once':False,
-                 'enable_captcha_always':False,
-                 'enable_ajax':False,
-                 'object_id':1,
-                 'content_type':self.site_content_type,
-                 'variation':'UpdatePublicForm',
-                 'parent':self.page,
-                 'ordering':0}
-                 
-        self.delete_pf_kwargs = {
-                 'region':'third_col',
-                 'enable_captcha_once':False,
-                 'enable_captcha_always':False,
-                 'enable_ajax':False,
-                 'object_id':1,
-                 'content_type':self.site_content_type,
-                 'variation':'DeletePublicForm',
-                 'parent':self.page,
-                 'ordering':0}
-                                          
+    update_pf_kwargs = {
+         'region':'second_col',
+         'enable_captcha_once':False,
+         'enable_captcha_always':False,
+         'enable_ajax':False,
+         'object_id':1,
+         'content_type':site_content_type,
+         'variation':'UpdatePublicForm',
+         'ordering':0}
+    delete_pf_kwargs = {
+         'region':'third_col',
+         'enable_captcha_once':False,
+         'enable_captcha_always':False,
+         'enable_ajax':False,
+         'object_id':1,
+         'content_type':site_content_type,
+         'variation':'DeletePublicForm',
+         'ordering':0}
+
+    def setup_crud_page(self):
+        for kwargs in (self.create_pf_kwargs,
+                       self.update_pf_kwargs,
+                       self.delete_pf_kwargs):
+            kwargs['parent'] = self.page
+                          
         self.pf_ct = module_content_type(Page, PublicForm)
         self.create_pf_ct = self.pf_ct(**self.create_pf_kwargs)
         self.create_pf_ct.save()
@@ -1418,60 +1418,42 @@ class RendererMediaTest(CRUDTest):
     <div class="page-content">{% feincms_render_region feincms_page "second_col" request %}</div>
     <div class="page-content">{% feincms_render_region feincms_page "third_col" request %}</div>{%endspaceless%}"""
 
+    create_pf_kwargs = {
+         'region':'first_col',
+         'enable_captcha_once':False,
+         'enable_captcha_always':True,
+         'enable_ajax':False,
+         'object_id':None,
+         'content_type':CRUDTest.site_content_type,
+         'variation':'CreatePublicForm',
+         'ordering':0}
+
+    update_pf_kwargs = {
+         'region':'second_col',
+         'enable_captcha_once':False,
+         'enable_captcha_always':True,
+         'enable_ajax':False,
+         'object_id':1,
+         'content_type':CRUDTest.site_content_type,
+         'variation':'UpdatePublicForm',
+         'ordering':0}
+         
+    delete_pf_kwargs = {
+         'region':'third_col',
+         'enable_captcha_once':False,
+         'enable_captcha_always':True,
+         'enable_ajax':False,
+         'object_id':1,
+         'content_type':CRUDTest.site_content_type,
+         'variation':'DeletePublicForm',
+         'ordering':0}
+
     def create_templates(self):
         for action in ('create', 'update', 'delete'):        
             self.setup_template('content/sites/site_%s.html'%action,
                                 """<form method='POST'>{{form}}<input type="submit" name="{{form.submit_name}}"/></form>"""
                                )
 
-
-    def setup_crud_page(self):
-        self.site_content_type = ContentType.objects.\
-                                 get_for_model(Site)
-        
-        self.create_pf_kwargs = {
-                 'region':'first_col',
-                 'enable_captcha_once':False,
-                 'enable_captcha_always':True,
-                 'enable_ajax':False,
-                 'object_id':None,
-                 'content_type':self.site_content_type,
-                 'variation':'CreatePublicForm',
-                 'parent':self.page,
-                 'ordering':0}
-
-        self.update_pf_kwargs = {
-                 'region':'second_col',
-                 'enable_captcha_once':False,
-                 'enable_captcha_always':True,
-                 'enable_ajax':False,
-                 'object_id':1,
-                 'content_type':self.site_content_type,
-                 'variation':'UpdatePublicForm',
-                 'parent':self.page,
-                 'ordering':0}
-                 
-        self.delete_pf_kwargs = {
-                 'region':'third_col',
-                 'enable_captcha_once':False,
-                 'enable_captcha_always':True,
-                 'enable_ajax':False,
-                 'object_id':1,
-                 'content_type':self.site_content_type,
-                 'variation':'DeletePublicForm',
-                 'parent':self.page,
-                 'ordering':0}
-                                          
-        self.pf_ct = module_content_type(Page, PublicForm)
-        self.create_pf_ct = self.pf_ct(**self.create_pf_kwargs)
-        self.create_pf_ct.save()
-
-        self.update_pf_ct = self.pf_ct(**self.update_pf_kwargs)
-        self.update_pf_ct.save()
-
-        self.delete_pf_ct = self.pf_ct(**self.delete_pf_kwargs)
-        self.delete_pf_ct.save()
-        self.create_templates()
     def test_create_public_form_media(self):
         class TestFormClass(ModelForm):
             class Meta:
@@ -1579,3 +1561,63 @@ class RendererMediaTest(CRUDTest):
                           "captcha.js",
                           "form/class/media.js"):
             self.assert_(mediapath in response.content)
+
+
+class PublicFormAjaxTests(CRUDTest):
+    def create_templates(self):
+        for action in ('create', 'update', 'delete'):        
+            self.setup_template('content/sites/site_%s.html'%action,
+                                """{%spaceless%}<form method='POST'>{{form}}<input type="submit" name="{{form.submit_name}}"/></form>{%endspaceless%}"""
+                                )
+
+    def test_ajax_create(self):
+        self.setup_crud_page()
+        sites_n = Site.objects.all().count()
+        response = self.client.post(self.page._cached_url, 
+                        data={'test22_first_col_0-domain':'',
+                              'test22_first_col_0-name':'',
+                              'test22_first_col_0_create':'submit'},
+                        HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assert_(response.content == """<form method='POST'><tr><th><label for="id_test22_first_col_0-domain">Domain name:</label></th><td><ul class="errorlist"><li>This field is required.</li></ul><input id="id_test22_first_col_0-domain" type="text" name="test22_first_col_0-domain" maxlength="100" /></td></tr><tr><th><label for="id_test22_first_col_0-name">Display name:</label></th><td><ul class="errorlist"><li>This field is required.</li></ul><input id="id_test22_first_col_0-name" type="text" name="test22_first_col_0-name" maxlength="50" /></td></tr><input type="submit" name="test22_first_col_0_create"/></form>""")
+
+        self.assert_(Site.objects.all().count() == sites_n)
+        response = self.client.post(self.page._cached_url, 
+                        data={'test22_first_col_0-domain':'AJAX CREATED DOMAIN',
+                               'test22_first_col_0-name':'AJAX CREATED',
+                               'test22_first_col_0_create':'submit'},
+                        HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+
+
+        self.assert_(response.content == """<form method='POST'><tr><th><label for="id_test22_first_col_0-domain">Domain name:</label></th><td><input id="id_test22_first_col_0-domain" type="text" name="test22_first_col_0-domain" value="AJAX CREATED DOMAIN" maxlength="100" /></td></tr><tr><th><label for="id_test22_first_col_0-name">Display name:</label></th><td><input id="id_test22_first_col_0-name" type="text" name="test22_first_col_0-name" value="AJAX CREATED" maxlength="50" /></td></tr><input type="submit" name="test22_first_col_0_create"/></form>""")
+        self.assert_(Site.objects.all().count() == (sites_n+1))
+
+    def test_ajax_update(self):
+        self.setup_crud_page()
+        response = self.client.post(self.page._cached_url, 
+                        data={'test22_second_col_0-domain':'',
+                              'test22_second_col_0-name':'NOTUPDATED',
+                              'test22_second_col_0_update':'submit'},
+                        HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assert_(response.content == """<form method='POST'><tr><th><label for="id_test22_second_col_0-domain">Domain name:</label></th><td><ul class="errorlist"><li>This field is required.</li></ul><input id="id_test22_second_col_0-domain" type="text" name="test22_second_col_0-domain" maxlength="100" /></td></tr><tr><th><label for="id_test22_second_col_0-name">Display name:</label></th><td><input id="id_test22_second_col_0-name" type="text" name="test22_second_col_0-name" value="NOTUPDATED" maxlength="50" /></td></tr><input type="submit" name="test22_second_col_0_update"/></form>""")
+
+        self.assert_(Site.objects.get(id=1).name != 'NOTUPDATED')
+        response = self.client.post(self.page._cached_url, 
+                        data={'test22_second_col_0-domain':'AJAX UPDATED DOMAIN',
+                               'test22_second_col_0-name':'AJAX UPDATED NAME',
+                               'test22_second_col_0_update':'submit'},
+                        HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+
+
+        self.assert_(response.content == """<form method='POST'><tr><th><label for="id_test22_second_col_0-domain">Domain name:</label></th><td><input id="id_test22_second_col_0-domain" type="text" name="test22_second_col_0-domain" value="AJAX UPDATED DOMAIN" maxlength="100" /></td></tr><tr><th><label for="id_test22_second_col_0-name">Display name:</label></th><td><input id="id_test22_second_col_0-name" type="text" name="test22_second_col_0-name" value="AJAX UPDATED NAME" maxlength="50" /></td></tr><input type="submit" name="test22_second_col_0_update"/></form>""")
+        self.assert_(Site.objects.get(id=1).domain == 'AJAX UPDATED DOMAIN')
+        self.assert_(Site.objects.get(id=1).name == 'AJAX UPDATED NAME')
+
+    def test_ajax_delete(self):
+        self.setup_crud_page()
+        sites_n = Site.objects.all().count()
+        response = self.client.post(self.page._cached_url, 
+                        data={'test22_third_col_0_delete':'submit'},
+                        HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assert_(response.content == """<form method='POST'><input type="submit" name="test22_third_col_0_delete"/></form>""")
+
+        self.assert_(Site.objects.all().count() == (sites_n-1))
