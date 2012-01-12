@@ -36,7 +36,9 @@ class PublicFormCaptchaMixin(object):
     
     @property
     def form_contains_errors(self):
-        return self.get_form(self.get_form_class()).is_valid()
+        if not hasattr(self, '_form_contains_errors'):
+            self._form_contains_errors = self.get_form(self.get_form_class()).is_valid()
+        self._form_contains_errors            
     
     def is_captcha_required(self, request):
         if request.user.is_authenticated():
@@ -314,13 +316,16 @@ class BaseDeletePublicFormPresentation(BasePresentationPublicForm):
 
 
 class CreatePublicForm(PublicFormRequestDispatcher, BaseCreatePublicForm):
+    '''Create'''
     pass
 
 
 class UpdatePublicForm(PublicFormRequestDispatcher, BaseUpdatePublicForm):
+    '''Update'''
     pass
 
 
 class DeletePublicForm(PublicFormRequestDispatcher, BaseDeletePublicForm):
+    '''Delete'''
     presentation_class = BaseDeletePublicFormPresentation
     
