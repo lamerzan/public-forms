@@ -52,3 +52,46 @@ Page.register_templates({
             ('third_col', 'Third column'),
             ),
         })
+from feincms.module.page.models import Page
+Page.register_templates({
+'title': '3 cols template',
+'path': 'cms/3cols.html',
+'regions': (
+    ('first_col', 'First column'),
+    ('second_col', 'Second column'),
+    ('third_col', 'Third column'),
+    ),
+})
+
+from feincms.module.page.models import Page
+Page.register_templates({
+'title': '3 cols template',
+'path': 'cms/3cols.html',
+'regions': (
+    ('first_col', 'First column'),
+    ('second_col', 'Second column'),
+    ('third_col', 'Third column'),
+    ),
+})
+
+from feincms.module.page.models import Page
+Page.register_templates({
+'title': '3 cols template',
+'path': 'cms/3cols.html',
+'regions': (
+    ('first_col', 'First column'),
+    ('second_col', 'Second column'),
+    ('third_col', 'Third column'),
+    ),
+})
+
+from feincms.module.page.models import Page
+Page.register_templates({
+'title': '3 cols template',
+'path': 'cms/3cols.html',
+'regions': (
+    ('first_col', 'First column'),
+    ('second_col', 'Second column'),
+    ('third_col', 'Third column'),
+    ),
+})

@@ -5,6 +5,8 @@ from inspect import getmembers
 from tempfile import mkstemp
 import subprocess
 
+
+
 import imp
 
 from django.test import TestCase
@@ -199,10 +201,28 @@ class CreatePublicFormsTest(FeincmsPageTestCase):
         pf = pf_ct(**pf_kwargs)
         pf.save()
 
-        request = self.factory.get(self.page._cached_url)
-        pf.process(request)
-        self.assert_(issubclass(dict(getmembers(pf.render.render))['im_class'],
-                     BasePublicForm.process_view))
+        data = {}
+        
+        request = self.factory.get(self.page._cached_url, data = data)
+        renderer_class = pf.render.presentation_class
+        for method_name in ('render', 'on_prepare', 'on_response'):
+            method = pf.render.dispatch_method(method_name, request)
+            im_class = dict(getmembers(method))['im_class']
+            self.assert_(issubclass(im_class, renderer_class))
+        
+        request = self.factory.post(self.page._cached_url, data = data)
+
+        for method_name in ('render', 'on_prepare', 'on_response'):
+            method = pf.render.dispatch_method(method_name, request)
+            im_class = dict(getmembers(method))['im_class']
+            self.assert_(issubclass(im_class, renderer_class))
+
+        request = self.factory.put(self.page._cached_url, data = data)
+
+        for method_name in ('render', 'on_prepare', 'on_response'):
+            method = pf.render.dispatch_method(method_name, request)
+            im_class = dict(getmembers(method))['im_class']
+            self.assert_(issubclass(im_class, renderer_class))
 
     def test_renderer_for_request_owner_is_creation_renderer(self):
         pf_kwargs = {
@@ -219,15 +239,28 @@ class CreatePublicFormsTest(FeincmsPageTestCase):
         pf = pf_ct(**pf_kwargs)
         pf.save()
 
-        request = self.factory.get(self.page._cached_url)
-        def is_request_owner(self, request):
-            return True
-        pf.is_request_owner = is_request_owner.__get__(pf, pf.__class__)
+        data={'test22_first_col_0_create':True}
+        
+        request = self.factory.get(self.page._cached_url, data = data)
+        renderer_class = CreatePublicForm
+        for method_name in ('render', 'on_prepare', 'on_response'):
+            method = pf.render.dispatch_method(method_name, request)
+            im_class = dict(getmembers(method))['im_class']
+            self.assert_(issubclass(im_class, renderer_class))
+        
+        request = self.factory.post(self.page._cached_url, data = data)
+        for method_name in ('render', 'on_prepare', 'on_response'):
+            method = pf.render.dispatch_method(method_name, request)
+            im_class = dict(getmembers(method))['im_class']
+            self.assert_(issubclass(im_class, renderer_class))
 
-        pf.process(request)
-        self.assert_(issubclass(dict(getmembers(pf.render.render))['im_class'],
-                     CreatePublicForm))
-    
+        request = self.factory.put(self.page._cached_url, data = data)
+        for method_name in ('render', 'on_prepare', 'on_response'):
+            method = pf.render.dispatch_method(method_name, request)
+            im_class = dict(getmembers(method))['im_class']
+            self.assert_(issubclass(im_class, renderer_class))
+
+
     def test_is_request_owner_returns_true_for_correct_prefix(self):
         pf_kwargs = {
                      'region':'first_col',
@@ -246,7 +279,7 @@ class CreatePublicFormsTest(FeincmsPageTestCase):
         request = self.factory.get('%s?test22_first_col_0_create'%self.page._cached_url)
         self.assert_(pf.render.is_request_owner(request))
 
-        request = self.factory.get(self.page._cached_url, data={'test22_first_col_0_create':True})
+        
         self.assert_(pf.render.is_request_owner(request))
 
     def test_submit_name(self):
@@ -269,6 +302,7 @@ class CreatePublicFormsTest(FeincmsPageTestCase):
                             )
 
         response = self.client.get(self.page._cached_url)
+        
         self.assert_("""<input type="submit" name="test22_first_col_0_create"/>""" in response.content)
 
 
@@ -316,28 +350,6 @@ class CreatePublicFormsTest(FeincmsPageTestCase):
         
 
 class UpdatePublicFormsTest(FeincmsPageTestCase):
-    def test_is_request_owner_returns_true_for_correct_prefix(self):
-        pf_kwargs = {
-                     'region':'first_col',
-                     'enable_captcha_once':False,
-                     'enable_captcha_always':False,
-                     'enable_ajax':False,
-                     'object_id':None,
-                     'content_type':ContentType.objects.get_for_model(Site),
-                     'variation':u'UpdatePublicForm',
-                     'parent':self.page,
-                     'ordering':0
-                     }
-        pf_ct = module_content_type(Page, PublicForm)
-        pf = pf_ct(**pf_kwargs)
-        pf.save()
-        request = self.factory.get('%s?test22_first_col_0_update'%self.page._cached_url)
-        self.assert_(pf.render.is_request_owner(request))
-
-        request = self.factory.get(self.page._cached_url, 
-                                   data={'test22_first_col_0_update':True})
-        self.assert_(pf.render.is_request_owner(request))
-
     def test_renderer_for_not_request_owner_is_form_processing_renderer(self):
         pf_kwargs = {
                      'region':'first_col',
@@ -353,34 +365,65 @@ class UpdatePublicFormsTest(FeincmsPageTestCase):
         pf = pf_ct(**pf_kwargs)
         pf.save()
 
-        request = self.factory.get(self.page._cached_url)
-        pf.process(request)
-        self.assert_(issubclass(dict(getmembers(pf.render.render))['im_class'],
-                     BasePublicForm.process_view))
+        data = {}
+        
+        request = self.factory.get(self.page._cached_url, data = data)
+        renderer_class = pf.render.presentation_class
+        for method_name in ('render', 'on_prepare', 'on_response'):
+            method = pf.render.dispatch_method(method_name, request)
+            im_class = dict(getmembers(method))['im_class']
+            self.assert_(issubclass(im_class, renderer_class))
+        
+        request = self.factory.post(self.page._cached_url, data = data)
 
-    def test_renderer_for_request_owner_is_update_renderer(self):
-            pf_kwargs = {
-                         'region':'first_col',
-                         'enable_captcha_once':False,
-                         'enable_captcha_always':False,
-                         'enable_ajax':False,
-                         'object_id':None,
-                         'content_type':ContentType.objects.get_for_model(Site),
-                         'variation':u'UpdatePublicForm',
-                         'parent':self.page,
-                         }
-            pf_ct = module_content_type(Page, PublicForm)
-            pf = pf_ct(**pf_kwargs)
-            pf.save()
+        for method_name in ('render', 'on_prepare', 'on_response'):
+            method = pf.render.dispatch_method(method_name, request)
+            im_class = dict(getmembers(method))['im_class']
+            self.assert_(issubclass(im_class, renderer_class))
 
-            request = self.factory.get(self.page._cached_url)
-            def is_request_owner(self, request):
-                return True
-            pf.is_request_owner = is_request_owner.__get__(pf, pf.__class__)
+        request = self.factory.put(self.page._cached_url, data = data)
 
-            pf.process(request)
-            self.assert_(issubclass(dict(getmembers(pf.render.render))['im_class'],
-                         UpdatePublicForm))
+        for method_name in ('render', 'on_prepare', 'on_response'):
+            method = pf.render.dispatch_method(method_name, request)
+            im_class = dict(getmembers(method))['im_class']
+            self.assert_(issubclass(im_class, renderer_class))
+
+    def test_renderer_for_request_owner_is_creation_renderer(self):
+        pf_kwargs = {
+                     'region':'first_col',
+                     'enable_captcha_once':False,
+                     'enable_captcha_always':False,
+                     'enable_ajax':False,
+                     'object_id':None,
+                     'content_type':ContentType.objects.get_for_model(Site),
+                     'variation':u'UpdatePublicForm',
+                     'parent':self.page,
+                     }
+        pf_ct = module_content_type(Page, PublicForm)
+        pf = pf_ct(**pf_kwargs)
+        pf.save()
+
+        data={'test22_first_col_0_update':True}
+        
+        request = self.factory.get(self.page._cached_url, data = data)
+        renderer_class = UpdatePublicForm
+        for method_name in ('render', 'on_prepare', 'on_response'):
+            method = pf.render.dispatch_method(method_name, request)
+            im_class = dict(getmembers(method))['im_class']
+            self.assert_(issubclass(im_class, renderer_class))
+        
+        request = self.factory.post(self.page._cached_url, data = data)
+        for method_name in ('render', 'on_prepare', 'on_response'):
+            method = pf.render.dispatch_method(method_name, request)
+            im_class = dict(getmembers(method))['im_class']
+            self.assert_(issubclass(im_class, renderer_class))
+
+        request = self.factory.put(self.page._cached_url, data = data)
+        for method_name in ('render', 'on_prepare', 'on_response'):
+            method = pf.render.dispatch_method(method_name, request)
+            im_class = dict(getmembers(method))['im_class']
+            self.assert_(issubclass(im_class, renderer_class))
+
 
     def test_is_request_owner_returns_true_for_correct_prefix(self):
         pf_kwargs = {
@@ -400,8 +443,7 @@ class UpdatePublicFormsTest(FeincmsPageTestCase):
         request = self.factory.get('%s?test22_first_col_0_update'%self.page._cached_url)
         self.assert_(pf.render.is_request_owner(request))
 
-        request = self.factory.get(self.page._cached_url, 
-                                   data={'test22_first_col_0_update':True})
+        
         self.assert_(pf.render.is_request_owner(request))
 
     def test_submit_name(self):
@@ -424,6 +466,7 @@ class UpdatePublicFormsTest(FeincmsPageTestCase):
                             )
 
         response = self.client.get(self.page._cached_url)
+        
         self.assert_("""<input type="submit" name="test22_first_col_0_update"/>""" in response.content)
 
     def test_update_with_success_action_redirects(self):
@@ -434,7 +477,7 @@ class UpdatePublicFormsTest(FeincmsPageTestCase):
                  'enable_captcha_once':False,
                  'enable_captcha_always':False,
                  'enable_ajax':False,
-                 'object_id':1,
+                 'object_id':None,
                  'content_type':ContentType.objects.get_for_model(Site),
                  'variation':'TestRenderer',
                  'parent':self.page,
@@ -466,29 +509,7 @@ class UpdatePublicFormsTest(FeincmsPageTestCase):
             self.assert_(self.page._cached_url in response['Location'])
         finally:
             update_pf_ct.render = orig_render
-
 class DeletePublicFormsTest(FeincmsPageTestCase):
-    def test_is_request_owner_returns_true_for_correct_prefix(self):
-        pf_kwargs = {
-                     'region':'first_col',
-                     'enable_captcha_once':False,
-                     'enable_captcha_always':False,
-                     'enable_ajax':False,
-                     'object_id':None,
-                     'content_type':ContentType.objects.get_for_model(Site),
-                     'variation':u'DeletePublicForm',
-                     'parent':self.page,
-                     'ordering':0
-                     }
-        pf_ct = module_content_type(Page, PublicForm)
-        pf = pf_ct(**pf_kwargs)
-        pf.save()
-        request = self.factory.get('%s?test22_first_col_0_delete'%self.page._cached_url)
-        self.assert_(pf.render.is_request_owner(request))
-
-        request = self.factory.get(self.page._cached_url, 
-                                   data={'test22_first_col_0_delete':True})
-        self.assert_(pf.render.is_request_owner(request))
     def test_renderer_for_not_request_owner_is_form_processing_renderer(self):
         pf_kwargs = {
                      'region':'first_col',
@@ -497,41 +518,72 @@ class DeletePublicFormsTest(FeincmsPageTestCase):
                      'enable_ajax':False,
                      'object_id':None,
                      'content_type':ContentType.objects.get_for_model(Site),
-                     'variation':u'UpdatePublicForm',
+                     'variation':u'DeletePublicForm',
                      'parent':self.page,
                      }
         pf_ct = module_content_type(Page, PublicForm)
         pf = pf_ct(**pf_kwargs)
         pf.save()
 
-        request = self.factory.get(self.page._cached_url)
-        pf.process(request)
-        self.assert_(issubclass(dict(getmembers(pf.render.render))['im_class'],
-                     BasePublicForm.process_view))
+        data = {}
+        
+        request = self.factory.get(self.page._cached_url, data = data)
+        renderer_class = pf.render.presentation_class
+        for method_name in ('render', 'on_prepare', 'on_response'):
+            method = pf.render.dispatch_method(method_name, request)
+            im_class = dict(getmembers(method))['im_class']
+            self.assert_(issubclass(im_class, renderer_class))
+        
+        request = self.factory.post(self.page._cached_url, data = data)
 
-    def test_renderer_for_request_owner_is_update_renderer(self):
-            pf_kwargs = {
-                         'region':'first_col',
-                         'enable_captcha_once':False,
-                         'enable_captcha_always':False,
-                         'enable_ajax':False,
-                         'object_id':None,
-                         'content_type':ContentType.objects.get_for_model(Site),
-                         'variation':u'DeletePublicForm',
-                         'parent':self.page,
-                         }
-            pf_ct = module_content_type(Page, PublicForm)
-            pf = pf_ct(**pf_kwargs)
-            pf.save()
+        for method_name in ('render', 'on_prepare', 'on_response'):
+            method = pf.render.dispatch_method(method_name, request)
+            im_class = dict(getmembers(method))['im_class']
+            self.assert_(issubclass(im_class, renderer_class))
 
-            request = self.factory.get(self.page._cached_url)
-            def is_request_owner(self, request):
-                return True
-            pf.is_request_owner = is_request_owner.__get__(pf, pf.__class__)
+        request = self.factory.put(self.page._cached_url, data = data)
 
-            pf.process(request)
-            self.assert_(issubclass(dict(getmembers(pf.render.render))['im_class'],
-                         DeletePublicForm))
+        for method_name in ('render', 'on_prepare', 'on_response'):
+            method = pf.render.dispatch_method(method_name, request)
+            im_class = dict(getmembers(method))['im_class']
+            self.assert_(issubclass(im_class, renderer_class))
+
+    def test_renderer_for_request_owner_is_creation_renderer(self):
+        pf_kwargs = {
+                     'region':'first_col',
+                     'enable_captcha_once':False,
+                     'enable_captcha_always':False,
+                     'enable_ajax':False,
+                     'object_id':None,
+                     'content_type':ContentType.objects.get_for_model(Site),
+                     'variation':u'DeletePublicForm',
+                     'parent':self.page,
+                     }
+        pf_ct = module_content_type(Page, PublicForm)
+        pf = pf_ct(**pf_kwargs)
+        pf.save()
+
+        data={'test22_first_col_0_delete':True}
+        
+        request = self.factory.get(self.page._cached_url, data = data)
+        renderer_class = DeletePublicForm
+        for method_name in ('render', 'on_prepare', 'on_response'):
+            method = pf.render.dispatch_method(method_name, request)
+            im_class = dict(getmembers(method))['im_class']
+            self.assert_(issubclass(im_class, renderer_class))
+        
+        request = self.factory.post(self.page._cached_url, data = data)
+        for method_name in ('render', 'on_prepare', 'on_response'):
+            method = pf.render.dispatch_method(method_name, request)
+            im_class = dict(getmembers(method))['im_class']
+            self.assert_(issubclass(im_class, renderer_class))
+
+        request = self.factory.put(self.page._cached_url, data = data)
+        for method_name in ('render', 'on_prepare', 'on_response'):
+            method = pf.render.dispatch_method(method_name, request)
+            im_class = dict(getmembers(method))['im_class']
+            self.assert_(issubclass(im_class, renderer_class))
+
 
     def test_is_request_owner_returns_true_for_correct_prefix(self):
         pf_kwargs = {
@@ -551,11 +603,10 @@ class DeletePublicFormsTest(FeincmsPageTestCase):
         request = self.factory.get('%s?test22_first_col_0_delete'%self.page._cached_url)
         self.assert_(pf.render.is_request_owner(request))
 
-        request = self.factory.get(self.page._cached_url, 
-                                  data={'test22_first_col_0_delete':True})
+        
         self.assert_(pf.render.is_request_owner(request))
 
-    def test_submit_name(self):     
+    def test_submit_name(self):
         pf_kwargs = {
                      'region':'first_col',
                      'enable_captcha_once':False,
@@ -575,12 +626,12 @@ class DeletePublicFormsTest(FeincmsPageTestCase):
                             )
 
         response = self.client.get(self.page._cached_url)
+        
         self.assert_("""<input type="submit" name="test22_first_col_0_delete"/>""" in response.content)
 
     def test_delete_with_success_action_redirects(self):
         class TestRenderer(DeletePublicForm):
              success_action = True
-        
         pf_kwargs = {
                  'region':'first_col',
                  'enable_captcha_once':False,
@@ -592,7 +643,6 @@ class DeletePublicFormsTest(FeincmsPageTestCase):
                  'parent':self.page,
                  'ordering':0
                      }
-        
         delete_pf_ct = module_content_type(Page, PublicForm)
         orig_render = delete_pf_ct.render
         try:
@@ -605,6 +655,7 @@ class DeletePublicFormsTest(FeincmsPageTestCase):
 
             response = self.client.post(self.page._cached_url,
                                         data={'test22_first_col_0_delete':'submit'})
+            
             self.assert_(response.status_code == 302)
 
             self.assert_(self.page._cached_url in response['Location'])
@@ -819,7 +870,6 @@ class MultiformCRUDTestMixin(object):
                             data={'test22_first_col_0-domain':'',
                                   'test22_first_col_0-name':'b',
                                   'test22_first_col_0_create':'submit'})
-
         self.assert_(response.content=="""<div class="page-content"><form method='POST'><tr><th><label for="id_test22_first_col_0-domain">Domain name:</label></th><td><ul class="errorlist"><li>This field is required.</li></ul><input id="id_test22_first_col_0-domain" type="text" name="test22_first_col_0-domain" maxlength="100" /></td></tr><tr><th><label for="id_test22_first_col_0-name">Display name:</label></th><td><input id="id_test22_first_col_0-name" type="text" name="test22_first_col_0-name" value="b" maxlength="50" /></td></tr><input type="submit" name="test22_first_col_0_create"/></form></div><div class="page-content"><form method='POST'><tr><th><label for="id_test22_second_col_0-domain">Domain name:</label></th><td><input id="id_test22_second_col_0-domain" type="text" name="test22_second_col_0-domain" value="example.com" maxlength="100" /></td></tr><tr><th><label for="id_test22_second_col_0-name">Display name:</label></th><td><input id="id_test22_second_col_0-name" type="text" name="test22_second_col_0-name" value="example.com" maxlength="50" /></td></tr><input type="submit" name="test22_second_col_0_update"/></form></div><div class="page-content"><form method='POST'><input type="submit" name="test22_third_col_0_delete"/></form></div>""")
         self.assert_(Site.objects.all().count() == sites_n)
 
@@ -877,7 +927,7 @@ class SingleFormWithFormsetsCRUDTest(MultiformCRUDTestMixin, CRUDTest):
                                   'test22_second_col_0-name':'notupdated',
                                   'test22_second_col_0_update':'submit'})
         self.assert_(response.content=="""<form method='POST'><div class="page-content"><fieldset><tr><th><label for="id_test22_first_col_0-domain">Domain name:</label></th><td><input id="id_test22_first_col_0-domain" type="text" name="test22_first_col_0-domain" maxlength="100" /></td></tr><tr><th><label for="id_test22_first_col_0-name">Display name:</label></th><td><input id="id_test22_first_col_0-name" type="text" name="test22_first_col_0-name" maxlength="50" /></td></tr><input type="submit" name="test22_first_col_0_create"/></fieldset></div><div class="page-content"><fieldset><tr><th><label for="id_test22_second_col_0-domain">Domain name:</label></th><td><ul class="errorlist"><li>This field is required.</li></ul><input id="id_test22_second_col_0-domain" type="text" name="test22_second_col_0-domain" maxlength="100" /></td></tr><tr><th><label for="id_test22_second_col_0-name">Display name:</label></th><td><input id="id_test22_second_col_0-name" type="text" name="test22_second_col_0-name" value="notupdated" maxlength="50" /></td></tr><input type="submit" name="test22_second_col_0_update"/></fieldset></div><div class="page-content"><fieldset><input type="submit" name="test22_third_col_0_delete"/></fieldset></div></form>""")
-#        self.assert_(Site.objects.get(id=1).name != 'notupdated')
+        self.assert_(Site.objects.get(id=1).name != 'notupdated')
 
 
 class PublicFormCaptchaTests(FeincmsPageTestCase):
@@ -1202,25 +1252,48 @@ class PublicFormCaptchaTests(FeincmsPageTestCase):
                  'parent':self.page,
                  'ordering':0}
 
-        orig_get_form = CreatePublicForm.get_form
+        orig_presentation_get_form = CreatePublicForm.presentation_class.\
+                                                                get_form
+        orig_modification_get_form = CreatePublicForm.get_form
         mutable_form_store = {}
-        def get_form(self, *args, **kwargs):
-            form = orig_get_form.__get__(self, CreatePublicForm)(*args, **kwargs)
-            mutable_form_store['form'] = form
+        def presentation_get_form(self, *args, **kwargs):
+            form = orig_presentation_get_form.__get__(self, 
+                                        CreatePublicForm.presentation_class)\
+                                            (*args, **kwargs)
+            mutable_form_store['presentation_form'] = form
             return form
 
-        CreatePublicForm.get_form = get_form.__get__(None, CreatePublicForm)
+        CreatePublicForm.presentation_class.get_form = \
+                                        presentation_get_form.__get__(None, 
+                                        CreatePublicForm.presentation_class)
+
+        def modification_get_form(self, *args, **kwargs):
+            form = orig_modification_get_form.__get__(self, CreatePublicForm)\
+                                            (*args, **kwargs)
+            mutable_form_store['modification_form'] = form
+            return form
+
+        CreatePublicForm.get_form = modification_get_form.__get__(None, 
+                                        CreatePublicForm)
+
         try:
             pf_ct = module_content_type(Page, PublicForm)
             create_pf_ct = pf_ct(**create_pf_kwargs)
             create_pf_ct.save()
             
-            create_pf_ct.render.get_form = get_form.__get__(create_pf_ct.render,
-                                                            create_pf_ct.render.__class__)
             response = self.client.get(self.page._cached_url)
-            self.assert_(settings.PUBLIC_FORMS_CAPTCHA_FIELD_NAME in mutable_form_store['form'].fields)
+            self.assert_(settings.PUBLIC_FORMS_CAPTCHA_FIELD_NAME in \
+                            mutable_form_store['presentation_form'].fields)
+
+            response = self.client.get(self.page._cached_url,
+                                    data = {'test22_first_col_0_create':True})
+            self.assert_(settings.PUBLIC_FORMS_CAPTCHA_FIELD_NAME in \
+                            mutable_form_store['modification_form'].fields)
+
         finally:
-            CreatePublicForm.get_form = orig_get_form
+            CreatePublicForm.presentation_class.get_form = \
+                                                orig_presentation_get_form
+            CreatePublicForm.get_form = orig_modification_get_form
 
     def test_captcha_field_appended_if_captcha_required_on_update(self):
         site_content_type = ContentType.objects.\
@@ -1237,25 +1310,48 @@ class PublicFormCaptchaTests(FeincmsPageTestCase):
                  'parent':self.page,
                  'ordering':0}
 
-        orig_get_form = UpdatePublicForm.get_form
+        orig_presentation_get_form = UpdatePublicForm.presentation_class.\
+                                                                get_form
+        orig_modification_get_form = UpdatePublicForm.get_form
         mutable_form_store = {}
-        def get_form(self, *args, **kwargs):
-            form = orig_get_form.__get__(self, UpdatePublicForm)(*args, **kwargs)
-            mutable_form_store['form'] = form
+        def presentation_get_form(self, *args, **kwargs):
+            form = orig_presentation_get_form.__get__(self, 
+                                        UpdatePublicForm.presentation_class)\
+                                            (*args, **kwargs)
+            mutable_form_store['presentation_form'] = form
             return form
 
-        UpdatePublicForm.get_form = get_form.__get__(None, UpdatePublicForm)
+        UpdatePublicForm.presentation_class.get_form = \
+                                        presentation_get_form.__get__(None, 
+                                        UpdatePublicForm.presentation_class)
+
+        def modification_get_form(self, *args, **kwargs):
+            form = orig_modification_get_form.__get__(self, UpdatePublicForm)\
+                                            (*args, **kwargs)
+            mutable_form_store['modification_form'] = form
+            return form
+
+        UpdatePublicForm.get_form = modification_get_form.__get__(None, 
+                                        UpdatePublicForm)
+
         try:
             pf_ct = module_content_type(Page, PublicForm)
             update_pf_ct = pf_ct(**update_pf_kwargs)
             update_pf_ct.save()
             
-            update_pf_ct.render.get_form = get_form.__get__(update_pf_ct.render,
-                                                            update_pf_ct.render.__class__)
             response = self.client.get(self.page._cached_url)
-            self.assert_(settings.PUBLIC_FORMS_CAPTCHA_FIELD_NAME in mutable_form_store['form'].fields)
+            self.assert_(settings.PUBLIC_FORMS_CAPTCHA_FIELD_NAME in \
+                            mutable_form_store['presentation_form'].fields)
+
+            response = self.client.get(self.page._cached_url,
+                                    data = {'test22_first_col_0_update':True})
+            self.assert_(settings.PUBLIC_FORMS_CAPTCHA_FIELD_NAME in \
+                            mutable_form_store['modification_form'].fields)
+
         finally:
-            UpdatePublicForm.get_form = orig_get_form
+            UpdatePublicForm.presentation_class.get_form = \
+                                                orig_presentation_get_form
+            UpdatePublicForm.get_form = orig_modification_get_form
 
     def test_captcha_field_appended_if_captcha_required_on_delete(self):
         site_content_type = ContentType.objects.\
@@ -1272,25 +1368,48 @@ class PublicFormCaptchaTests(FeincmsPageTestCase):
                  'parent':self.page,
                  'ordering':0}
 
-        orig_get_form = DeletePublicForm.get_form
+        orig_presentation_get_form = DeletePublicForm.presentation_class.\
+                                                                get_form
+        orig_modification_get_form = DeletePublicForm.get_form
         mutable_form_store = {}
-        def get_form(self, *args, **kwargs):
-            form = orig_get_form.__get__(self, DeletePublicForm)(*args, **kwargs)
-            mutable_form_store['form'] = form
+        def presentation_get_form(self, *args, **kwargs):
+            form = orig_presentation_get_form.__get__(self, 
+                                        DeletePublicForm.presentation_class)\
+                                            (*args, **kwargs)
+            mutable_form_store['presentation_form'] = form
             return form
 
-        DeletePublicForm.get_form = get_form.__get__(None, DeletePublicForm)
+        DeletePublicForm.presentation_class.get_form = \
+                                        presentation_get_form.__get__(None, 
+                                        DeletePublicForm.presentation_class)
+
+        def modification_get_form(self, *args, **kwargs):
+            form = orig_modification_get_form.__get__(self, DeletePublicForm)\
+                                            (*args, **kwargs)
+            mutable_form_store['modification_form'] = form
+            return form
+
+        DeletePublicForm.get_form = modification_get_form.__get__(None, 
+                                        DeletePublicForm)
+
         try:
             pf_ct = module_content_type(Page, PublicForm)
             delete_pf_ct = pf_ct(**delete_pf_kwargs)
             delete_pf_ct.save()
             
-            delete_pf_ct.render.get_form = get_form.__get__(delete_pf_ct.render,
-                                                            delete_pf_ct.render.__class__)
             response = self.client.get(self.page._cached_url)
-            self.assert_(settings.PUBLIC_FORMS_CAPTCHA_FIELD_NAME in mutable_form_store['form'].fields)
+            self.assert_(settings.PUBLIC_FORMS_CAPTCHA_FIELD_NAME in \
+                            mutable_form_store['presentation_form'].fields)
+
+            response = self.client.get(self.page._cached_url,
+                                    data = {'test22_first_col_0_delete':True})
+            self.assert_(settings.PUBLIC_FORMS_CAPTCHA_FIELD_NAME in \
+                            mutable_form_store['modification_form'].fields)
+
         finally:
-            DeletePublicForm.get_form = orig_get_form
+            DeletePublicForm.presentation_class.get_form = \
+                                                orig_presentation_get_form
+            DeletePublicForm.get_form = orig_modification_get_form
 
 
 class RendererMediaTest(CRUDTest):
@@ -1380,8 +1499,7 @@ class RendererMediaTest(CRUDTest):
         self.create_pf_ct.save()
 
 
-        response = self.client.get(self.page._cached_url)
-
+        response = self.client.get(self.page._cached_url)        
         for mediapath in ("renderer/media.css",
                           "form/class/media.css",
                           "renderer/media.js",
@@ -1398,6 +1516,7 @@ class RendererMediaTest(CRUDTest):
                 js=('form/class/media.js',)
                 css={'all': ('form/class/media.css',),}
             
+            captcha = ReCaptchaFieldAjax()
         
         class TestRenderer(UpdatePublicForm):
             media = Media(
@@ -1415,6 +1534,16 @@ class RendererMediaTest(CRUDTest):
         self.update_pf_ct.variation = 'TestRenderer'
         self.update_pf_ct.save()
 
+
+        response = self.client.get(self.page._cached_url)        
+        for mediapath in ("renderer/media.css",
+                          "form/class/media.css",
+                          "renderer/media.js",
+                          "recaptcha_ajax.js",
+                          "captcha.js",
+                          "form/class/media.js"):
+            self.assert_(mediapath in response.content)
+
     def test_delete_public_form_media(self):
         class TestFormClass(ModelForm):
             class Meta:
@@ -1422,6 +1551,8 @@ class RendererMediaTest(CRUDTest):
             class Media:
                 js=('form/class/media.js',)
                 css={'all': ('form/class/media.css',),}
+            
+            captcha = ReCaptchaFieldAjax()
         
         class TestRenderer(DeletePublicForm):
             media = Media(
@@ -1439,8 +1570,8 @@ class RendererMediaTest(CRUDTest):
         self.delete_pf_ct.variation = 'TestRenderer'
         self.delete_pf_ct.save()
 
-        response = self.client.get(self.page._cached_url)
 
+        response = self.client.get(self.page._cached_url)        
         for mediapath in ("renderer/media.css",
                           "form/class/media.css",
                           "renderer/media.js",
@@ -1448,6 +1579,3 @@ class RendererMediaTest(CRUDTest):
                           "captcha.js",
                           "form/class/media.js"):
             self.assert_(mediapath in response.content)
-            
-class PublicFormAjaxTests(object):
-    pass
