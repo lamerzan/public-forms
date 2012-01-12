@@ -149,6 +149,8 @@ class BasePublicForm(BaseRenderer,
         self.prepare_page(request)
         self.get_form_class = self.append_modifiers(self.get_form_class, 
                                     self.form_class_modifiers)
+        self.get_form_class = self.cached_method(self.get_form_class)
+        self.get_form = self.cached_method(self.get_form)
 
     def append_modifiers(self, wrapped, modifiers):
         @wraps(wrapped)
@@ -162,6 +164,15 @@ class BasePublicForm(BaseRenderer,
             return form_class
         return wrapper.__get__(self, self.__class__)
 
+    def cached_method(self, wrapped):
+        instance = self
+        cache_name = '_cached_%s_result'%wrapped.func_name
+        @wraps(wrapped)
+        def wrapper(self, *args, **kwargs):
+            if not hasattr(instance, cache_name):
+                setattr(instance, cache_name, wrapped(*args, **kwargs))
+            return getattr(instance, cache_name)
+        return wrapper.__get__(self, self.__class__)
 
 class BasePresentationPublicForm(BasePublicForm, 
                                  SingleObjectTemplateResponseMixin, 
@@ -225,6 +236,11 @@ class PublicFormRequestDispatcher(object):
             presentation.get_form_class = presentation.\
                                 append_modifiers(presentation.get_form_class, 
                                         presentation.form_class_modifiers)
+            presentation.get_form_class = \
+                        presentation.cached_method(presentation.get_form_class)
+            presentation.get_form = \
+                        presentation.cached_method(presentation.get_form)
+
             presentation.request = self.request
             self._presentation = presentation
         return self._presentation
