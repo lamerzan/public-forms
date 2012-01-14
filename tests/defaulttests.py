@@ -33,6 +33,7 @@ INSTALLED_APPS = (
     'captcha',
     'feincms.page.extensions.variative_renderer',
     'feincms.page.extensions.public_forms',
+    'cms',
     'django.contrib.admin',
 )    
 MIDDLEWARE_CLASSES = (
