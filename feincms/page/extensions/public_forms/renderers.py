@@ -528,8 +528,8 @@ class BaseCreatePublicFormPresentation(BasePresentationPublicForm):
         return kwargs
 
 class CreatePublicForm(PublicFormRequestDispatcher, BaseCreatePublicForm):
-    presentation_class = BaseCreatePublicFormPresentation
     '''Create'''
+    presentation_class = BaseCreatePublicFormPresentation
     pass
 
 

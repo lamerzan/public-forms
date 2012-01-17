@@ -28,12 +28,12 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'filebrowser',
     'mptt',
+    'cms',
     'feincms.module.page',
     'feincms',
     'captcha',
     'feincms.page.extensions.variative_renderer',
     'feincms.page.extensions.public_forms',
-    'cms',
     'django.contrib.admin',
 )    
 MIDDLEWARE_CLASSES = (

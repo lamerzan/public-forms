@@ -78,9 +78,8 @@ class ContentTypeField(DynamicEditableFieldMixin,
 
 
     def modify_default(self, value):
-        return ContentType.objects.get_for_model(value).id
-
-from django.contrib.auth.models import Group
+        return ContentType.objects.get_for_model(value).id \
+                if value is not None else value
 
 class PublicForm(models.Model):
     @property
