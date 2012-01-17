@@ -11,6 +11,10 @@ REQUIRED_APPLICATIONS = ['feincms',
 
 CAPTCHA_FIELD_NAME = 'captcha'
 
+CONTENT_TYPES = (
+                 'feincms.page.extensions.public_forms.models.PublicForm',
+                 )
+
 DEFAULT_ENABLE_CAPTCHA_ONCE = True
 DEFAULT_ENABLE_CAPTCHA_ALWAYS = False
 DEFAULT_ENABLE_AJAX = False

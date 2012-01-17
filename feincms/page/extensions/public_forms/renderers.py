@@ -446,7 +446,7 @@ class BaseCreatePublicForm(BaseModificationPublicForm, CreateView):
     def formset_valid_post_save(self):
         if not self.get_success_url():
             #recreate formset since old one contains posted 
-            #data (together with delete checkboxes and so forth)
+            #data (together with 'delete' checkboxes and so forth)
             #we need actial instance data instead
             orig_get_formset_kwargs = self.get_formset_kwargs
             def get_formset_kwargs(self, **extra):

@@ -13,10 +13,12 @@ from django.test.client import Client
 from django.test.client import RequestFactory
 from django.contrib.sites.models import Site
 from django.contrib.auth import authenticate, login
-from django.contrib.auth.models import Group, Permission
+from django.contrib.auth.models import Group, Permission, User
 from django.forms import ModelForm, Media
 from django.forms.models import BaseInlineFormSet
+from django.db import models
 
+from django.test.simple import DjangoTestSuiteRunner
 from captcha.fields import ReCaptchaFieldAjax
 
 from feincms.module.page.models import Page
@@ -79,6 +81,20 @@ class FeincmsPageTestCase(TestCase):
         <div class="page-content">{% feincms_render_region feincms_page "first_col" request %}</div>
         <div class="page-content">{% feincms_render_region feincms_page "second_col" request %}</div>
         <div class="page-content">{% feincms_render_region feincms_page "third_col" request %}</div>{%endspaceless%}"""
+    
+    @classmethod
+    def setUpClass(self):
+        admin, created = User.objects.get_or_create(username='admin')
+        if created:
+            admin.set_password('admin')
+            admin.is_active = True
+            admin.is_staff = True
+            admin.is_superuser = True
+            admin.save()
+    
+    @classmethod
+    def tearDownClass(self):
+        pass
 
     def setUp(self):
         self.setup_page()
@@ -166,6 +182,8 @@ class FeincmsPageTestCase(TestCase):
 class CRUDTest(FeincmsPageTestCase):
     model_content_type = ContentType.objects.\
                                  get_for_model(Site)
+    public_form_class = PublicForm
+
     create_pf_kwargs = {
          'region':'first_col',
          'enable_captcha_once':False,
@@ -201,7 +219,7 @@ class CRUDTest(FeincmsPageTestCase):
             kwargs['parent'] = self.page
             kwargs['content_type'] = self.model_content_type
                           
-        self.pf_ct = module_content_type(Page, PublicForm)
+        self.pf_ct = module_content_type(Page, self.public_form_class)
         self.create_pf_ct = self.pf_ct(**self.create_pf_kwargs)
         self.create_pf_ct.save()
 
@@ -218,6 +236,168 @@ class CRUDTest(FeincmsPageTestCase):
 
         super(CRUDTest, self).tearDown()
 
+class MultiformCRUDTestMixin(object):
+    def test_successful_create(self):
+        self.setup_crud_page()
+        sites_n = Site.objects.all().count()
+        response = self.client.post(self.page._cached_url,
+                            data={'test22_first_col_0-domain':'a',
+                                  'test22_first_col_0-name':'b',
+                                  'test22_first_col_0_create':'submit'})
+        self.assert_('errorlist' not in response.content)
+        self.assert_(Site.objects.all().count() == (sites_n+1))
+
+
+    def test_successful_create_with_success_action(self):
+        class TestRenderer(CreatePublicForm):
+             success_action = True
+        
+        pf_ct = module_content_type(Page, PublicForm)
+        self.orig_render = pf_ct.render
+        pf_ct.render = RendererSelectionWrapper([TestRenderer]+pf_ct.renderer_choices)
+        self.setup_crud_page()
+
+
+        self.create_pf_ct.variation = 'TestRenderer'
+        self.create_pf_ct.save()
+        
+
+        sites_n = Site.objects.all().count()
+        response = self.client.post(self.page._cached_url,
+                            data={'test22_first_col_0-domain':'a',
+                                  'test22_first_col_0-name':'b',
+                                  'test22_first_col_0_create':'submit'})
+        self.assert_(response.status_code == 302)
+        self.assert_(self.page._cached_url in response['Location'])
+        self.assert_(Site.objects.all().count() == (sites_n+1))
+
+    def test_unsuccessful_create_with_success_action(self):
+        class TestRenderer(CreatePublicForm):
+             success_action = True
+        
+        pf_ct = module_content_type(Page, PublicForm)
+        self.orig_render = pf_ct.render
+        pf_ct.render = RendererSelectionWrapper([TestRenderer]+pf_ct.renderer_choices)
+        self.setup_crud_page()
+
+
+        self.create_pf_ct.variation = 'TestRenderer'
+        self.create_pf_ct.save()
+        
+
+        sites_n = Site.objects.all().count()
+        response = self.client.post(self.page._cached_url,
+                            data={'test22_first_col_0-domain':'',
+                                  'test22_first_col_0-name':'b',
+                                  'test22_first_col_0_create':'submit'})
+        self.assert_(response.status_code == 200)
+        self.assert_('errorlist' in response.content)
+        self.assert_(Site.objects.all().count() == sites_n)
+
+    def test_successful_update_with_success_action(self):
+        class TestRenderer(UpdatePublicForm):
+             success_action = True
+        
+        pf_ct = module_content_type(Page, PublicForm)
+        self.orig_render = pf_ct.render
+        pf_ct.render = RendererSelectionWrapper([TestRenderer]+pf_ct.renderer_choices)
+        self.setup_crud_page()
+
+
+        self.update_pf_ct.variation = 'TestRenderer'
+        self.update_pf_ct.save()
+
+
+        
+        response = self.client.post(self.page._cached_url,
+                            data={'test22_second_col_0-domain':'a',
+                                  'test22_second_col_0-name':'b',
+                                  'test22_second_col_0_update':'submit'})
+        
+        self.assert_(response.status_code == 302)
+        self.assert_(self.page._cached_url in response['Location'])
+
+    def test_unsuccessful_update_with_success_action(self):
+        class TestRenderer(UpdatePublicForm):
+             success_action = True
+        
+        pf_ct = module_content_type(Page, PublicForm)
+        self.orig_render = pf_ct.render
+        pf_ct.render = RendererSelectionWrapper([TestRenderer]+pf_ct.renderer_choices)
+        self.setup_crud_page()
+
+
+        self.update_pf_ct.variation = 'TestRenderer'
+        self.update_pf_ct.save()
+        
+        response = self.client.post(self.page._cached_url,
+                            data={'test22_second_col_0-domain':'',
+                                  'test22_second_col_0-name':'notupdated',
+                                  'test22_second_col_0_update':'submit'})
+        
+        self.assert_(response.status_code == 200)
+        self.assert_('errorlist' in response.content)
+        self.assert_(unicode(Site.objects.get(id=1).name) \
+                     is not unicode('notupdated'))
+
+    def test_successful_delete_with_success_action(self):
+        class TestRenderer(DeletePublicForm):
+             success_action = True
+        
+        pf_ct = module_content_type(Page, PublicForm)
+        self.orig_render = pf_ct.render
+        pf_ct.render = RendererSelectionWrapper([TestRenderer]+pf_ct.renderer_choices)
+        self.setup_crud_page()
+
+
+        self.delete_pf_ct.variation = 'TestRenderer'
+        self.delete_pf_ct.save()
+
+        response = self.client.post(self.page._cached_url,
+                            data={'test22_third_col_0_delete':'submit'})
+
+        self.assert_(response.status_code == 302)
+        self.assert_(self.page._cached_url in response['Location'])
+        self.assert_(Site.objects.filter(id=1).count() == 0)
+
+
+
+    def test_successful_update(self):
+        self.setup_crud_page()
+        response = self.client.post(self.page._cached_url,
+                            data={'test22_second_col_0-domain':'updated',
+                                  'test22_second_col_0-name':'updated',
+                                  'test22_second_col_0_update':'submit'})
+        
+        self.assert_('errorlist' not in response.content)                                
+        self.assert_(Site.objects.get(id=1).domain == 'updated')
+        self.assert_(Site.objects.get(id=1).name == 'updated')
+
+    def test_successful_delete(self):
+        self.setup_crud_page()
+        response = self.client.post(self.page._cached_url,
+                            data={'test22_third_col_0_delete':'submit'})
+        self.assert_('errorlist' not in response.content)
+        self.assert_(Site.objects.filter(id=1).count() == 0)
+
+    def test_unsuccessful_create(self):
+        self.setup_crud_page()
+        sites_n = Site.objects.all().count()
+        response = self.client.post(self.page._cached_url,
+                            data={'test22_first_col_0-domain':'',
+                                  'test22_first_col_0-name':'b',
+                                  'test22_first_col_0_create':'submit'})
+        self.assert_(response.content=="""<div class="page-content"><form method='POST'><tr><th><label for="id_test22_first_col_0-domain">Domain name:</label></th><td><ul class="errorlist"><li>This field is required.</li></ul><input id="id_test22_first_col_0-domain" type="text" name="test22_first_col_0-domain" maxlength="100" /></td></tr><tr><th><label for="id_test22_first_col_0-name">Display name:</label></th><td><input id="id_test22_first_col_0-name" type="text" name="test22_first_col_0-name" value="b" maxlength="50" /></td></tr><input type="submit" name="test22_first_col_0_create"/></form></div><div class="page-content"><form method='POST'><tr><th><label for="id_test22_second_col_0-domain">Domain name:</label></th><td><input id="id_test22_second_col_0-domain" type="text" name="test22_second_col_0-domain" value="example.com" maxlength="100" /></td></tr><tr><th><label for="id_test22_second_col_0-name">Display name:</label></th><td><input id="id_test22_second_col_0-name" type="text" name="test22_second_col_0-name" value="example.com" maxlength="50" /></td></tr><input type="submit" name="test22_second_col_0_update"/></form></div><div class="page-content"><form method='POST'><input type="submit" name="test22_third_col_0_delete"/></form></div>""")
+        self.assert_(Site.objects.all().count() == sites_n)
+
+    def test_unsuccessful_update(self):
+        self.setup_crud_page()
+        response = self.client.post(self.page._cached_url,
+                            data={'test22_second_col_0-domain':'',
+                                  'test22_second_col_0-name':'notupdated',
+                                  'test22_second_col_0_update':'submit'})
+        self.assert_(response.content=="""<div class="page-content"><form method='POST'><tr><th><label for="id_test22_first_col_0-domain">Domain name:</label></th><td><input id="id_test22_first_col_0-domain" type="text" name="test22_first_col_0-domain" maxlength="100" /></td></tr><tr><th><label for="id_test22_first_col_0-name">Display name:</label></th><td><input id="id_test22_first_col_0-name" type="text" name="test22_first_col_0-name" maxlength="50" /></td></tr><input type="submit" name="test22_first_col_0_create"/></form></div><div class="page-content"><form method='POST'><tr><th><label for="id_test22_second_col_0-domain">Domain name:</label></th><td><ul class="errorlist"><li>This field is required.</li></ul><input id="id_test22_second_col_0-domain" type="text" name="test22_second_col_0-domain" maxlength="100" /></td></tr><tr><th><label for="id_test22_second_col_0-name">Display name:</label></th><td><input id="id_test22_second_col_0-name" type="text" name="test22_second_col_0-name" value="notupdated" maxlength="50" /></td></tr><input type="submit" name="test22_second_col_0_update"/></form></div><div class="page-content"><form method='POST'><input type="submit" name="test22_third_col_0_delete"/></form></div>""")
+        self.assert_(Site.objects.get(id=1).name != 'notupdated')
 class RequirementsTest(TestCase):
     def test_variative_importable(self):
         from feincms.page.extensions import variative_renderer
@@ -1123,6 +1303,7 @@ class PublicFormCaptchaTests(FeincmsPageTestCase):
         self.update_pf_ct.save()
 
         request = self.factory.get(self.page._cached_url)
+        from django.contrib.auth.models import User
         login(request, authenticate(username='admin', password='admin'))
         
         self.assert_(not self.update_pf_ct.render.is_captcha_required(request))
@@ -2281,6 +2462,10 @@ class TestMTMReverseInlineFormsets(CRUDTest):
 
 
 class TestFKInlineFormsetsCRUD(CRUDTest):
+    # def setUp(self):
+    #     super(TestFKInlineFormsetsCRUD, self).setUp()
+    #     DjangoTestSuiteRunner().setup_databases()
+        
     model_content_type = ContentType.objects.get_for_model(ContentType)
     data_template = {
                      u'%(slug)s_%(region)s_%(ordering)s-model': u'',
@@ -2600,90 +2785,84 @@ class TestFKInlineFormsetsCRUD(CRUDTest):
         self.assert_(Permission.objects.filter(id=created_permission.id).count() == 0)
         self.assert_(response.content == """<div class="page-content"><form method='POST'><fieldset><tr><th><label for="id_test22_first_col_0-name">Name:</label></th><td><input id="id_test22_first_col_0-name" type="text" name="test22_first_col_0-name" maxlength="100" /></td></tr><tr><th><label for="id_test22_first_col_0-app_label">App label:</label></th><td><input id="id_test22_first_col_0-app_label" type="text" name="test22_first_col_0-app_label" maxlength="100" /></td></tr><tr><th><label for="id_test22_first_col_0-model">Python model class name:</label></th><td><input id="id_test22_first_col_0-model" type="text" name="test22_first_col_0-model" maxlength="100" /></td></tr><input type="submit" name="test22_first_col_0_create"/></fieldset></form></div><div class="page-content"><form method='POST'><fieldset><tr><th><label for="id_test22_second_col_0-name">Name:</label></th><td><input id="id_test22_second_col_0-name" type="text" name="test22_second_col_0-name" value="TestName" maxlength="100" /></td></tr><tr><th><label for="id_test22_second_col_0-app_label">App label:</label></th><td><input id="id_test22_second_col_0-app_label" type="text" name="test22_second_col_0-app_label" value="TestApplabel" maxlength="100" /></td></tr><tr><th><label for="id_test22_second_col_0-model">Python model class name:</label></th><td><input id="id_test22_second_col_0-model" type="text" name="test22_second_col_0-model" value="TestModel" maxlength="100" /></td></tr><input type="submit" name="test22_second_col_0_update"/></fieldset><div>permissions</div><div><fieldset><input type="hidden" name="test22_second_col_0-TOTAL_FORMS" value="5" id="id_test22_second_col_0-TOTAL_FORMS" /><input type="hidden" name="test22_second_col_0-INITIAL_FORMS" value="3" id="id_test22_second_col_0-INITIAL_FORMS" /><input type="hidden" name="test22_second_col_0-MAX_NUM_FORMS" id="id_test22_second_col_0-MAX_NUM_FORMS" /><tr><th><label for="id_test22_second_col_0-0-name">Name:</label></th><td><input id="id_test22_second_col_0-0-name" type="text" name="test22_second_col_0-0-name" value="Can add permission" maxlength="50" /></td></tr><tr><th><label for="id_test22_second_col_0-0-codename">Codename:</label></th><td><input id="id_test22_second_col_0-0-codename" type="text" name="test22_second_col_0-0-codename" value="add_permission" maxlength="100" /></td></tr><tr><th><label for="id_test22_second_col_0-0-DELETE">Delete:</label></th><td><input type="checkbox" name="test22_second_col_0-0-DELETE" id="id_test22_second_col_0-0-DELETE" /><input type="hidden" name="test22_second_col_0-0-id" value="1" id="id_test22_second_col_0-0-id" /><input type="hidden" name="test22_second_col_0-0-content_type" value="1" id="id_test22_second_col_0-0-content_type" /></td></tr><tr><th><label for="id_test22_second_col_0-1-name">Name:</label></th><td><input id="id_test22_second_col_0-1-name" type="text" name="test22_second_col_0-1-name" value="Can change permission" maxlength="50" /></td></tr><tr><th><label for="id_test22_second_col_0-1-codename">Codename:</label></th><td><input id="id_test22_second_col_0-1-codename" type="text" name="test22_second_col_0-1-codename" value="change_permission" maxlength="100" /></td></tr><tr><th><label for="id_test22_second_col_0-1-DELETE">Delete:</label></th><td><input type="checkbox" name="test22_second_col_0-1-DELETE" id="id_test22_second_col_0-1-DELETE" /><input type="hidden" name="test22_second_col_0-1-id" value="2" id="id_test22_second_col_0-1-id" /><input type="hidden" name="test22_second_col_0-1-content_type" value="1" id="id_test22_second_col_0-1-content_type" /></td></tr><tr><th><label for="id_test22_second_col_0-2-name">Name:</label></th><td><input id="id_test22_second_col_0-2-name" type="text" name="test22_second_col_0-2-name" value="Can delete permission" maxlength="50" /></td></tr><tr><th><label for="id_test22_second_col_0-2-codename">Codename:</label></th><td><input id="id_test22_second_col_0-2-codename" type="text" name="test22_second_col_0-2-codename" value="delete_permission" maxlength="100" /></td></tr><tr><th><label for="id_test22_second_col_0-2-DELETE">Delete:</label></th><td><input type="checkbox" name="test22_second_col_0-2-DELETE" id="id_test22_second_col_0-2-DELETE" /><input type="hidden" name="test22_second_col_0-2-id" value="3" id="id_test22_second_col_0-2-id" /><input type="hidden" name="test22_second_col_0-2-content_type" value="1" id="id_test22_second_col_0-2-content_type" /></td></tr><tr><th><label for="id_test22_second_col_0-3-name">Name:</label></th><td><input id="id_test22_second_col_0-3-name" type="text" name="test22_second_col_0-3-name" maxlength="50" /></td></tr><tr><th><label for="id_test22_second_col_0-3-codename">Codename:</label></th><td><input id="id_test22_second_col_0-3-codename" type="text" name="test22_second_col_0-3-codename" maxlength="100" /></td></tr><tr><th><label for="id_test22_second_col_0-3-DELETE">Delete:</label></th><td><input type="checkbox" name="test22_second_col_0-3-DELETE" id="id_test22_second_col_0-3-DELETE" /><input type="hidden" name="test22_second_col_0-3-id" id="id_test22_second_col_0-3-id" /><input type="hidden" name="test22_second_col_0-3-content_type" value="1" id="id_test22_second_col_0-3-content_type" /></td></tr><tr><th><label for="id_test22_second_col_0-4-name">Name:</label></th><td><input id="id_test22_second_col_0-4-name" type="text" name="test22_second_col_0-4-name" maxlength="50" /></td></tr><tr><th><label for="id_test22_second_col_0-4-codename">Codename:</label></th><td><input id="id_test22_second_col_0-4-codename" type="text" name="test22_second_col_0-4-codename" maxlength="100" /></td></tr><tr><th><label for="id_test22_second_col_0-4-DELETE">Delete:</label></th><td><input type="checkbox" name="test22_second_col_0-4-DELETE" id="id_test22_second_col_0-4-DELETE" /><input type="hidden" name="test22_second_col_0-4-id" id="id_test22_second_col_0-4-id" /><input type="hidden" name="test22_second_col_0-4-content_type" value="1" id="id_test22_second_col_0-4-content_type" /></td></tr></fieldset></div></form></div><div class="page-content"><form method='POST'><fieldset><input type="submit" name="test22_third_col_0_delete"/></fieldset></form></div>""")
 
-    # def test_delete_form_formsets_with_invalid_creation_formset(self):
-    #     class TestRenderer(DeletePublicForm):
-    #         inlines = [(Permission,{'exclude':('content_type',)}),]
-        
-    #     permissions_n = Permission.objects.all().count()
 
-    #     pf_ct = module_content_type(Page, PublicForm)
-    #     self.orig_render = pf_ct.render
-    #     pf_ct.render = RendererSelectionWrapper([TestRenderer]+pf_ct.renderer_choices)
-    #     self.setup_crud_page()
+class InheritedModels(FeincmsPageTestCase):
+    def test_get_content_object_overrides_content_object(self):
+        class InheritedModel0(PublicForm):
+            default_content_type = Group
+            default_object_id = 1
 
-    #     self.delete_pf_ct.variation = 'TestRenderer'
-    #     self.delete_pf_ct.save()
+            def get_content_object(self, field_getter):
+                return 'YEP!'
 
-    #     data = self.get_request_data('third_col', 0, 'delete')
-    #     data.update({
-    #         'test22_third_col_0-model':'TestModel',
-    #         'test22_third_col_0-name':'TestName',
-    #         'test22_third_col_0-app_label':'TestApplabel',
-    #         'test22_third_col_0-0-codename':'Notdeleted',
-    #         'test22_third_col_0_delete':'submit',
-    #     })
+            class Meta:
+                abstract = True
 
-    #     response = self.client.post(self.page._cached_url, data = data)
-    #     self.assert_(response.content == """<div class="page-content"><form method='POST'><fieldset><tr><th><label for="id_test22_first_col_0-name">Name:</label></th><td><input id="id_test22_first_col_0-name" type="text" name="test22_first_col_0-name" maxlength="100" /></td></tr><tr><th><label for="id_test22_first_col_0-app_label">App label:</label></th><td><input id="id_test22_first_col_0-app_label" type="text" name="test22_first_col_0-app_label" maxlength="100" /></td></tr><tr><th><label for="id_test22_first_col_0-model">Python model class name:</label></th><td><input id="id_test22_first_col_0-model" type="text" name="test22_first_col_0-model" maxlength="100" /></td></tr><input type="submit" name="test22_first_col_0_create"/></fieldset></form></div><div class="page-content"><form method='POST'><fieldset><tr><th><label for="id_test22_second_col_0-name">Name:</label></th><td><input id="id_test22_second_col_0-name" type="text" name="test22_second_col_0-name" value="permission" maxlength="100" /></td></tr><tr><th><label for="id_test22_second_col_0-app_label">App label:</label></th><td><input id="id_test22_second_col_0-app_label" type="text" name="test22_second_col_0-app_label" value="auth" maxlength="100" /></td></tr><tr><th><label for="id_test22_second_col_0-model">Python model class name:</label></th><td><input id="id_test22_second_col_0-model" type="text" name="test22_second_col_0-model" value="permission" maxlength="100" /></td></tr><input type="submit" name="test22_second_col_0_update"/></fieldset></form></div><div class="page-content"><form method='POST'><fieldset><input type="submit" name="test22_third_col_0_delete"/></fieldset><div>permissions</div><div><fieldset><input type="hidden" name="test22_third_col_0-TOTAL_FORMS" value="2" id="id_test22_third_col_0-TOTAL_FORMS" /><input type="hidden" name="test22_third_col_0-INITIAL_FORMS" value="0" id="id_test22_third_col_0-INITIAL_FORMS" /><input type="hidden" name="test22_third_col_0-MAX_NUM_FORMS" id="id_test22_third_col_0-MAX_NUM_FORMS" /><tr><th><label for="id_test22_third_col_0-0-name">Name:</label></th><td><ul class="errorlist"><li>This field is required.</li></ul><input id="id_test22_third_col_0-0-name" type="text" name="test22_third_col_0-0-name" maxlength="50" /></td></tr><tr><th><label for="id_test22_third_col_0-0-codename">Codename:</label></th><td><input id="id_test22_third_col_0-0-codename" type="text" name="test22_third_col_0-0-codename" value="Notdeleted" maxlength="100" /></td></tr><tr><th><label for="id_test22_third_col_0-0-DELETE">Delete:</label></th><td><input type="checkbox" name="test22_third_col_0-0-DELETE" id="id_test22_third_col_0-0-DELETE" /><input type="hidden" name="test22_third_col_0-0-id" id="id_test22_third_col_0-0-id" /><input type="hidden" name="test22_third_col_0-0-content_type" id="id_test22_third_col_0-0-content_type" /></td></tr><tr><th><label for="id_test22_third_col_0-1-name">Name:</label></th><td><input id="id_test22_third_col_0-1-name" type="text" name="test22_third_col_0-1-name" maxlength="50" /></td></tr><tr><th><label for="id_test22_third_col_0-1-codename">Codename:</label></th><td><input id="id_test22_third_col_0-1-codename" type="text" name="test22_third_col_0-1-codename" maxlength="100" /></td></tr><tr><th><label for="id_test22_third_col_0-1-DELETE">Delete:</label></th><td><input type="checkbox" name="test22_third_col_0-1-DELETE" id="id_test22_third_col_0-1-DELETE" /><input type="hidden" name="test22_third_col_0-1-id" id="id_test22_third_col_0-1-id" /><input type="hidden" name="test22_third_col_0-1-content_type" id="id_test22_third_col_0-1-content_type" /></td></tr></fieldset></div></form></div>""")
-    #     self.assert_(ContentType.objects.get(id=self.delete_pf_ct.object_id).name!='TestName')
-    #     self.assert_(permissions_n == Permission.objects.all().count())
+        Page.create_content_type(InheritedModel0)
 
-    # def test_delete_form_formsets_with_invalid_form_and_creation_formset(self):        
-    #     class TestRenderer(DeletePublicForm):
-    #         inlines = [(Permission,{'exclude':('content_type',)}),]
-        
-    #     permissions_n = Permission.objects.all().count()
+        DjangoTestSuiteRunner().setup_databases()
+        sub_pf_class = module_content_type(Page, InheritedModel0)
+        sub_pf_kwargs = {
+         'region':'first_col',
+         'enable_captcha_once':False,
+         'enable_captcha_always':False,
+         'enable_ajax':False,
+         'object_id':None,
+         'variation':'CreatePublicForm',
+         'ordering':0}
+        sub_pf = sub_pf_class(sub_pf_kwargs)
+        self.assert_(sub_pf.content_object == 'YEP!')
 
-    #     pf_ct = module_content_type(Page, PublicForm)
-    #     self.orig_render = pf_ct.render
-    #     pf_ct.render = RendererSelectionWrapper([TestRenderer]+pf_ct.renderer_choices)
-    #     self.setup_crud_page()
+    def test_get_content_object_disables_editable(self):
+        class InheritedModel1(PublicForm):
+            default_content_type = Group
+            default_object_id = 1
 
-    #     self.delete_pf_ct.variation = 'TestRenderer'
-    #     self.delete_pf_ct.save()
+            def get_content_object(self, field_getter):
+                return 'YEP!'
 
-    #     data = self.get_request_data('third_col', 0, 'delete')
-    #     data.update({
-    #         'test22_third_col_0-model':'',
-    #         'test22_third_col_0-name':'TestName',
-    #         'test22_third_col_0-app_label':'',
-    #         'test22_third_col_0-0-codename':'Notdeleted',
-    #         'test22_third_col_0_delete':'submit',
-    #     })
+            class Meta:
+                abstract = True
 
-    #     response = self.client.post(self.page._cached_url, data = data)
+        Page.create_content_type(InheritedModel1)
 
-    #     show_in_browser(response.content)
-    #     print response.content
+        DjangoTestSuiteRunner().setup_databases()
+        sub_pf_class = module_content_type(Page, InheritedModel1)
+        sub_pf_kwargs = {
+         'region':'first_col',
+         'enable_captcha_once':False,
+         'enable_captcha_always':False,
+         'enable_ajax':False,
+         'object_id':None,
+         'variation':'CreatePublicForm',
+         'ordering':0}
+        sub_pf = sub_pf_class(sub_pf_kwargs)
+        self.assert_(bool(sub_pf._meta.get_field('object_id').editable) == False)
+        self.assert_(bool(sub_pf._meta.get_field('content_type').editable) == False)
 
-    #     self.assert_(response.content == """""")
-    #     self.assert_(ContentType.objects.get(id=self.delete_pf_ct.object_id).name!='TestName')
-    #     self.assert_(permissions_n == Permission.objects.all().count())
+    def test_get_content_object_disables_editable(self):
+        class InheritedModel2(PublicForm):
+            default_content_type = Group
+            default_object_id = 1
 
-    # def test_delete_form_creation_formsets(self):
-    #     class TestRenderer(DeletePublicForm):
-    #         inlines = [(Permission,{'exclude':('content_type',)}),]
-        
-    #     contenttypes_n = ContentType.objects.all().count()
-    #     permissions_n = Permission.objects.all().count()
+            def get_content_object(self, field_getter):
+                return 'YEP!'
 
-    #     pf_ct = module_content_type(Page, PublicForm)
-    #     self.orig_render = pf_ct.render
-    #     pf_ct.render = RendererSelectionWrapper([TestRenderer]+pf_ct.renderer_choices)
-    #     self.setup_crud_page()
+            class Meta:
+                abstract = True
 
-    #     self.delete_pf_ct.variation = 'TestRenderer'
-    #     self.delete_pf_ct.save()
+        Page.create_content_type(InheritedModel2)
 
-    #     data = self.get_request_data('third_col', 0, 'delete')
-    #     data.update({
-    #         'test22_third_col_0-model':'TestModel',
-    #         'test22_third_col_0-name':'TestName',
-    #         'test22_third_col_0-app_label':'TestApplabel',
-    #         'test22_third_col_0-0-codename':'TestCodeName',
-    #         'test22_third_col_0-0-name':'TestName',
-    #         'test22_third_col_0_delete':'submit',
-    #     })
-
-    #     response = self.client.post(self.page._cached_url, data = data)
-    #     self.assert_((contenttypes_n-1) = ContentType.objects.all().count())
+        DjangoTestSuiteRunner().setup_databases()
+        sub_pf_class = module_content_type(Page, InheritedModel2)
+        sub_pf_kwargs = {
+         'region':'first_col',
+         'enable_captcha_once':False,
+         'enable_captcha_always':False,
+         'enable_ajax':False,
+         'object_id':None,
+         'variation':'CreatePublicForm',
+         'ordering':0}
+        sub_pf = sub_pf_class(sub_pf_kwargs)
+        self.assert_(sub_pf.object_id == 1)
+        self.assert_(sub_pf.content_type.model_class() == Group)
