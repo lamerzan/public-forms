@@ -333,6 +333,7 @@ class BasePublicForm(BaseRenderer,
 class BasePresentationPublicForm(BasePublicForm,
                                  SingleObjectTemplateResponseMixin,
                                  ModelFormMixin):
+
     def render(self, request, *args, **kwargs):
         form = self.get_form(self.get_form_class())
         return self.render_to_response(self.get_context_data(form=form))
@@ -410,14 +411,14 @@ class PublicFormRequestDispatcher(object):
         return self._presentation
 
     def dispatch_method(self, method_name, request):
-        self.request = request
-        if self.is_request_owner(request):
-            if request.is_ajax():
-                return getattr(self, 'ajax_%s'%method_name)
+            self.request = request
+            if self.is_request_owner(request):
+                if request.is_ajax():
+                    return getattr(self, 'ajax_%s'%method_name)
+                else:
+                    return getattr(self, method_name)
             else:
-                return getattr(self, method_name)
-        else:
-            return getattr(self.presentation, method_name)
+                return getattr(self.presentation, method_name)
         
 
     def __call__(self, request, *args, **kwargs):
